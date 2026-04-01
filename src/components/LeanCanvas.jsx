@@ -14,7 +14,7 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-const initialCanvasState = {
+const DEMO_CANVAS_DATA = {
   segmentosClientes: { items: ["Homens e mulheres de 25-45 anos", "Interessados em autocuidado e rituais domésticos", "Design de interiores e minimalismo"], notes: "" },
   adotantesIniciais: { items: ["Trabalhadores em home office", "Entusiastas de aromaterapia", "Decoração em mídias sociais"], notes: "" },
   problema: { items: ["Stress e ansiedade urbana", "Uso de produtos com parafina tóxica", "Ambientes sem personalidade sensorial"], notes: "" },
@@ -27,7 +27,7 @@ const initialCanvasState = {
   metricasChave: { items: ["Valor vitalício (LTV)", "Custo de aquisição (CAC)", "Taxa de recompra", "Nível de engajamento"], notes: "" },
   vantagemCompetitiva: { items: ["Storytelling emocional forte", "Logística reversa de embalagens", "Parcerias com estúdios de Yoga"], notes: "" },
   conceitoAltoNivel: { items: ["Seu Spa particular em um único pavio"], notes: "" },
-  title: "MEU NOVO PROJETO",
+  title: "EXEMPLO: VELAS ARTESANAIS",
   lastSaved: new Date().toISOString()
 };
 
@@ -68,13 +68,18 @@ const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 export default function LeanCanvas() {
   const [canvasData, setCanvasData] = useState(() => {
     const saved = localStorage.getItem('lean_canvas_data');
-    if (!saved) return initialCanvasState;
+    if (!saved) return emptyCanvasState;
     try {
       const parsed = JSON.parse(saved);
-      return { ...initialCanvasState, ...parsed };
+      return { ...emptyCanvasState, ...parsed };
     } catch (e) {
-      return initialCanvasState;
+      return emptyCanvasState;
     }
+  });
+
+  const [tourStep, setTourStep] = useState(() => {
+    const completed = localStorage.getItem('lean_canvas_tour_completed');
+    return completed ? -1 : 0;
   });
 
   const [analysis, setAnalysis] = useState(null);
@@ -329,6 +334,16 @@ Canvas: ${JSON.stringify(canvasData)}`;
             <div className={cn("w-1.5 h-1.5 rounded-full", isEditing ? "bg-amber-500 animate-pulse" : "bg-emerald-500")} />
             {isEditing ? "EDITANDO" : "SALVO"} 
           </div>
+           <button 
+            onClick={() => {
+              if (confirm("Carregar dados de exemplo? Isso substituirá seu progresso atual.")) {
+                setCanvasData(DEMO_CANVAS_DATA);
+              }
+            }} 
+            className="sharp-button bg-cyan-400 hover:bg-cyan-300 text-black flex items-center gap-2 px-3 py-1 text-[8px] tracking-widest font-black"
+          >
+             <Sparkles size={12} /> EXEMPLO
+          </button>
           <button onClick={saveCanvasToFile} className="sharp-button bg-emerald-500 hover:bg-emerald-400 flex items-center gap-2 px-3 py-1 text-[8px] tracking-widest font-black">
              <Save size={12} />SALVAR
           </button>
@@ -632,15 +647,21 @@ Canvas: ${JSON.stringify(canvasData)}`;
         </aside>
       </main>
 
-      {/* Mobile Sticky Footer Actions (Menu Inferior) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#020617]/95 backdrop-blur-xl border-t border-white/10 px-6 py-3 flex items-center justify-between shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        {/* Mobile Sticky Footer Actions (Menu Inferior) */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#020617]/95 backdrop-blur-xl border-t border-white/10 px-6 py-3 flex items-center justify-between shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
           <div className="flex items-center gap-3">
             <div className={cn("w-2 h-2 rounded-full", isEditing ? "bg-amber-500 animate-pulse" : "bg-emerald-500")} />
             <span className="text-[9px] font-black tracking-widest text-white/40 uppercase">
               {isEditing ? "Processando..." : "Sincronizado"}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => confirm("Carregar dados de exemplo?") && setCanvasData(DEMO_CANVAS_DATA)}
+              className="p-3 bg-cyan-500 text-black rounded-sm active:scale-95 transition-all"
+            >
+              <Sparkles size={20} />
+            </button>
             <button onClick={saveCanvasToFile} className="p-3 bg-emerald-500 text-black rounded-sm shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">
               <Save size={20} />
             </button>
@@ -659,122 +680,86 @@ Canvas: ${JSON.stringify(canvasData)}`;
       {/* Focus Mode Overlay */}
       {focusBlock && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 animate-in zoom-in-95 duration-200">
-          <div className="absolute inset-0 bg-[#020617]/95 backdrop-blur-3xl" onClick={() => setFocusBlock(null)} />
-          <div className="w-full max-w-5xl max-h-[90vh] bg-[#0f172a] border border-white/10 flex flex-col relative z-50 shadow-2xl overflow-hidden rounded-sm">
-             
-             {/* Dynamic Header */}
-             <div className={cn("px-8 py-6 border-b border-white/10 flex justify-between items-center text-white relative overflow-hidden", focusBlock.color)}>
-                <div className="absolute inset-0 bg-black/20" />
-                <div className="relative flex items-center gap-4">
-                   <div className="p-3 bg-white/10 rounded-sm">
-                      {focusBlock.icon}
-                   </div>
-                   <div>
-                      <h2 className="text-2xl font-black uppercase italic tracking-tighter leading-none">{focusBlock.title}</h2>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-40 mt-1">SISTEMA DE EDIÇÃO ESTRUTURADA</p>
-                   </div>
-                </div>
-                <button onClick={() => setFocusBlock(null)} className="relative p-2 hover:bg-white/10 transition-colors">
-                   <X size={32} />
-                </button>
-             </div>
+           <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setFocusBlock(null)} />
+           <div className="w-full max-w-4xl bg-[#0f172a] border-4 border-white p-6 md:p-10 relative z-10 shadow-[20px_20px_0px_rgba(0,0,0,1)] overflow-y-auto max-h-[90vh]">
+              <div className="flex items-center justify-between mb-8 border-b-4 border-black pb-6">
+                 <div className="flex items-center gap-6">
+                    <div className={cn("p-4 border-4 border-black text-black shadow-[4px_4px_0px_rgba(0,0,0,1)]", focusBlock.color)}>
+                       {focusBlock.icon}
+                    </div>
+                    <div>
+                       <h2 className="text-3xl font-black uppercase tracking-tighter text-white">{focusBlock.title}</h2>
+                       <p className="text-[10px] font-bold text-cyan-400 mt-1 uppercase tracking-[0.2em]">Parâmetro Estratégico do Modelo de Negócio</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setFocusBlock(null)} className="p-3 hover:bg-white/10 text-white/40 hover:text-white transition-all border-4 border-transparent hover:border-white">
+                    <X size={32} />
+                 </button>
+              </div>
 
-             <div className="p-8 md:p-12 overflow-y-auto custom-scrollbar flex-1 bg-grid-slate-900/[0.04]">
-                <div className="space-y-12">
-                   {focusBlock.ids.map(id => {
-                      const data = canvasData[id];
-                      return (
-                        <div key={id} className="grid grid-cols-1 lg:grid-cols-2 gap-12 border-b border-white/5 pb-12 last:border-0 last:pb-0">
-                           <div className="space-y-8">
-                              <div className="flex items-center gap-3">
-                                 <div className={cn("w-1 h-6", focusBlock.color)} />
-                                 <h3 className="text-lg font-black uppercase italic text-white/90">
-                                   {id.replace(/([A-Z])/g, ' $1').toUpperCase()}
-                                 </h3>
-                              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="space-y-8">
+                    {focusBlock.ids.map(id => (
+                       <div key={id} className="space-y-4">
+                          <label className="text-[10px] font-black uppercase text-white/40 tracking-[0.3em] block">Entrada de Dados: {id}</label>
+                          <textarea 
+                             autoFocus
+                             className="w-full h-48 bg-black/40 border-4 border-white/10 p-6 text-lg font-bold text-white outline-none focus:border-cyan-500/50 resize-none transition-all"
+                             placeholder={blockHelp[id]}
+                             value={canvasData[id].headline !== undefined ? canvasData[id].headline : canvasData[id].items.join('\n')}
+                             onChange={(e) => {
+                                const val = e.target.value;
+                                if (canvasData[id].headline !== undefined) {
+                                   updateBlock(id, { headline: val });
+                                } else {
+                                   updateBlock(id, { items: val.split('\n') });
+                                }
+                             }}
+                          />
+                       </div>
+                    ))}
+                 </div>
+                 <div className="bg-white/5 border-4 border-white/5 p-8 flex flex-col gap-6">
+                    <div className="flex items-center gap-4 text-cyan-400">
+                       <HelpCircle size={24} />
+                       <h3 className="text-sm font-black uppercase tracking-widest">Guia Estratégico</h3>
+                    </div>
+                    <div className="space-y-6">
+                       {focusBlock.ids.map(id => (
+                          <div key={id} className="p-6 bg-black/40 border-l-4 border-cyan-500">
+                             <h4 className="text-[10px] font-black uppercase text-cyan-500 mb-2">{id}</h4>
+                             <p className="text-xs text-white/60 leading-relaxed font-medium italic">{blockHelp[id]}</p>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
 
-                              {data.headline !== undefined && (
-                                <div className="space-y-3">
-                                   <label className="text-[11px] font-black text-white/40 uppercase tracking-widest">PROPOSTA DE VALOR / CONCEITO</label>
-                                   <textarea 
-                                      className="w-full bg-white/5 border border-white/10 p-6 text-base font-bold outline-none focus:border-white/30 transition-colors text-white resize-none" 
-                                      value={data.headline || ""} 
-                                      onChange={(e) => updateBlock(id, { headline: e.target.value })} 
-                                      rows={3} 
-                                   />
-                                </div>
-                              )}
-                              
-                              <div className="space-y-3">
-                                 <label className="text-[11px] font-black text-white/40 uppercase tracking-widest">NOTAS ESTRATÉGICAS</label>
-                                 <textarea 
-                                    className="w-full bg-white/5 border border-white/10 p-6 text-sm outline-none focus:border-white/30 transition-colors text-white/80 min-h-[200px] leading-relaxed font-medium" 
-                                    value={data.notes || ""} 
-                                    onChange={e => updateBlock(id, { notes: e.target.value })} 
-                                    placeholder="Digite aqui observações, notas de campo ou detalhes estratégicos..."
-                                 />
-                              </div>
-                           </div>
-
-                           <div className="space-y-8">
-                              <div className="space-y-4">
-                                 <label className="text-[11px] font-black text-white/40 uppercase tracking-widest">PONTOS ESTRUTURADOS</label>
-                                 <div className="space-y-4">
-                                   {data.items?.map((item, idx) => (
-                                     <div key={idx} className="group flex flex-col gap-2 p-4 bg-white/5 border border-white/10 hover:bg-white/10 focus-within:border-white/40 transition-all relative">
-                                       <textarea 
-                                          className="bg-transparent border-none p-0 text-sm font-bold text-white/90 focus:ring-0 outline-none w-full resize-none leading-relaxed min-h-[40px]"
-                                          value={item}
-                                          rows={Math.max(1, Math.ceil(item.length / 80))}
-                                          onChange={(e) => {
-                                             const next = [...data.items];
-                                             next[idx] = e.target.value;
-                                             updateBlock(id, { items: next });
-                                          }}
-                                       />
-                                       <button 
-                                          onClick={() => { 
-                                            const next = [...data.items]; 
-                                            next.splice(idx, 1); 
-                                            updateBlock(id, { items: next }); 
-                                          }} 
-                                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-white/20 hover:text-red-500 transition-colors p-1"
-                                       >
-                                          <X size={14} />
-                                       </button>
-                                     </div>
-                                   ))}
-                                 </div>
-                                 <input 
-                                    type="text" 
-                                    placeholder="Adicionar registro e pressionar Enter..." 
-                                    className="w-full bg-transparent border-b border-white/20 py-4 text-sm font-bold outline-none focus:border-white/50 transition-all placeholder:text-white/10 text-white" 
-                                    onKeyDown={e => { 
-                                       if (e.key === 'Enter' && e.currentTarget.value) { 
-                                          updateBlock(id, { items: [...(data.items || []), e.currentTarget.value] }); 
-                                          e.currentTarget.value = ''; 
-                                       } 
-                                    }} 
-                                 />
-                              </div>
-                           </div>
-                        </div>
-                      );
-                   })}
-                </div>
-             </div>
-             
-             <div className="px-10 py-6 border-t border-white/5 flex justify-end bg-[#020617]/50">
-                <button 
-                   onClick={() => setFocusBlock(null)} 
-                   className={cn("px-10 py-3 text-[10px] font-black uppercase tracking-widest text-white border border-white/20 hover:bg-white hover:text-black transition-all", focusBlock.color)}
-                >
-                   CONCLUÍDO
-                </button>
-             </div>
-          </div>
+              <div className="mt-10 flex justify-end">
+                 <button 
+                  onClick={() => setFocusBlock(null)}
+                  className="sharp-button bg-cyan-400 hover:bg-cyan-300 text-black px-10 py-4 text-xs font-black"
+                 >
+                  CONCLUIR EDIÇÃO
+                 </button>
+              </div>
+           </div>
         </div>
       )}
+
+      {/* Onboarding Tour Overlay */}
+      {tourStep !== -1 && (
+        <TourOverlay 
+          step={tourStep} 
+          onNext={() => setTourStep(prev => prev + 1)} 
+          onSkip={() => {
+            localStorage.setItem('lean_canvas_tour_completed', 'true');
+            setTourStep(-1);
+          }}
+          isMobile={window.innerWidth < 1024}
+        />
+      )}
+
     </div>
   );
 }
@@ -913,6 +898,97 @@ function CanvasBlock({ id, title, icon, data, subBlocks, bgColor, onUpdate, plac
           onFocus={onFocus}
         />
       )}
+    </div>
+  );
+}
+
+function TourOverlay({ step, onNext, onSkip, isMobile }) {
+  const steps = [
+    {
+      title: "BEM-VINDO AO LEAN CANVAS PRO",
+      text: "Transforme sua ideia em um modelo de negócio estratégico com o poder da Inteligência Artificial.",
+      pos: "center",
+      icon: <Rocket size={40} className="text-cyan-400" />
+    },
+    {
+      title: "IDENTIDADE DO PROJETO",
+      text: "Dê um nome impactante à sua startup no topo. Você também pode carregar um 'Canvas de Exemplo' para ver como tudo funciona.",
+      pos: isMobile ? "top" : "top-left",
+      target: "header",
+      icon: <Sparkles size={24} className="text-amber-400" />
+    },
+    {
+      title: "BLOCOS ESTRATÉGICOS",
+      text: isMobile 
+        ? "No smartphone, navegue pelos blocos deslizando lateralmente no carrossel. Toque em qualquer bloco para editar em tela cheia." 
+        : "Complete cada um dos 9 blocos. Use as dicas internas para estruturar sua proposta de valor, problemas e canais.",
+      pos: "center",
+      icon: <Plus size={24} className="text-cyan-400" />
+    },
+    {
+      title: "INTELIGÊNCIA CENTRAL",
+      text: "Clique em ANALISAR para que a rede neural processe seu modelo e forneça insights, riscos, sugestões e um roadmap prático.",
+      pos: isMobile ? "bottom" : "bottom-right",
+      icon: <BrainCircuit size={24} className="text-cyan-400" />
+    },
+    {
+      title: "AÇÕES E EXPORTAÇÃO",
+      text: "Salve seu progresso localmente, imprima em PDF ou reinicie o canvas no menu inferior. Tudo pronto para começar!",
+      pos: "bottom",
+      icon: <Save size={24} className="text-emerald-400" />
+    }
+  ];
+
+  if (step >= steps.length) {
+    onSkip();
+    return null;
+  }
+
+  const currentStep = steps[step];
+
+  return (
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-[#020617]/90 backdrop-blur-md" />
+      
+      <div className={cn(
+        "relative w-full max-w-sm bg-[#0f172a] border-4 border-white p-8 shadow-[20px_20px_0px_rgba(0,0,0,1)] animate-in zoom-in-95 duration-300",
+        currentStep.pos === "top-left" && "lg:absolute lg:top-20 lg:left-20",
+        currentStep.pos === "bottom-right" && "lg:absolute lg:bottom-10 lg:right-[500px]",
+        currentStep.target === "header" && "-mt-40"
+      )}>
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-4">
+             {currentStep.icon}
+             <div className="h-0.5 flex-1 bg-white/10" />
+             <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{step + 1}/{steps.length}</span>
+          </div>
+          
+          <div className="space-y-3">
+            <h3 className="text-xl font-black text-white leading-tight uppercase italic">{currentStep.title}</h3>
+            <p className="text-xs font-medium text-white/60 leading-relaxed">{currentStep.text}</p>
+          </div>
+
+          <div className="flex items-center gap-4 pt-4">
+            <button 
+              onClick={onSkip}
+              className="text-[10px] font-black text-white/30 hover:text-white uppercase tracking-widest transition-colors"
+            >
+              PULAR TOUR
+            </button>
+            <button 
+              onClick={onNext}
+              className="flex-1 sharp-button bg-cyan-400 hover:bg-cyan-300 text-black py-3 text-[10px] font-black uppercase tracking-widest"
+            >
+              {step === steps.length - 1 ? "COMEÇAR" : "PRÓXIMO"}
+            </button>
+          </div>
+        </div>
+
+        {/* Small pointer for context if on desktop */}
+        {!isMobile && currentStep.target && (
+           <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rotate-45 bg-white" />
+        )}
+      </div>
     </div>
   );
 }
