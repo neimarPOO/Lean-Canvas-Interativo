@@ -113,8 +113,20 @@ export default function LeanCanvas() {
     setIsEditing(false);
   }, [canvasData]);
 
+  useEffect(() => {
+    if (analysis) {
+      localStorage.setItem('lean_canvas_analysis', JSON.stringify(analysis));
+    }
+  }, [analysis]);
+
   const saveCanvasToFile = () => {
-    const blob = new Blob([JSON.stringify(canvasData, null, 2)], { type: 'application/json' });
+    const exportData = {
+      canvasData,
+      analysis,
+      version: "2.0",
+      timestamp: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -139,14 +151,42 @@ export default function LeanCanvas() {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const content = JSON.parse(event.target.result);
+        const rawJson = JSON.parse(event.target.result);
         
-        // Validação básica da estrutura
-        if (!content.title || !content.problema) {
-          throw new Error("Formato de arquivo inválido. Por favor, selecione um JSON do Lean Canvas.");
+        // Suporte para o novo formato unificado { canvasData, analysis }
+        // ou o formato legado (apenas o canvas)
+        const content = rawJson.canvasData ? rawJson.canvasData : rawJson;
+        const analysisToRestore = rawJson.analysis ? rawJson.analysis : null;
+        
+        // 1. Validação de Esquema Rigorosa
+        const requiredBlocks = [
+          'problema', 'solucao', 'propostaValor', 'vantagemCompetitiva', 
+          'segmentosClientes', 'metricasChave', 'canais', 'estruturaCustos', 'fontesReceita'
+        ];
+        
+        const hasMissingBlock = requiredBlocks.some(block => !content[block]);
+        if (!content.title || hasMissingBlock) {
+          throw new Error("Formato de arquivo inválido ou incompleto. Utilize um JSON exportado por este sistema.");
         }
 
-        setCanvasData(content);
+        // 2. Higienização de integridade (Remover propriedades estranhas)
+        const sanitizedContent = { title: content.title };
+        requiredBlocks.forEach(block => {
+           sanitizedContent[block] = {
+              items: Array.isArray(content[block].items) ? content[block].items : [],
+              notes: typeof content[block].notes === 'string' ? content[block].notes : "",
+              headline: typeof content[block].headline === 'string' ? content[block].headline : ""
+           };
+        });
+
+        // 3. Restaurar campos extras se existirem
+        if (content.alternativasExistentes) sanitizedContent.alternativasExistentes = content.alternativasExistentes;
+        if (content.adotantesIniciais) sanitizedContent.adotantesIniciais = content.adotantesIniciais;
+        if (content.conceitoAltoNivel) sanitizedContent.conceitoAltoNivel = content.conceitoAltoNivel;
+
+        setCanvasData(sanitizedContent);
+        if (analysisToRestore) setAnalysis(analysisToRestore);
+        
         setShowToast("Canvas Carregado com Sucesso!");
         setTimeout(() => setShowToast(false), 3000);
       } catch (err) {
@@ -171,7 +211,9 @@ export default function LeanCanvas() {
   const canAnalyze = calculateReadiness() === 100;
 
   const performAnalysis = useCallback(async () => {
-    const userApiKey = aiConfig.apiKey || GEMINI_API_KEY;
+    const rawApiKey = aiConfig.apiKey || GEMINI_API_KEY;
+    const userApiKey = typeof rawApiKey === 'string' ? rawApiKey.trim() : null;
+    
     if (!userApiKey) {
        alert("Configure sua Chave de API nas configurações (ícone de engrenagem).");
        return;

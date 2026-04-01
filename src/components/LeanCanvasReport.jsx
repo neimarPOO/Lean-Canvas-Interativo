@@ -121,7 +121,7 @@ const LeanCanvasReport = ({ canvasData, analysis }) => {
 
       {/* Analysis Section (Deep Dive) */}
       {analysis && (
-        <div className="pt-24 mt-24 border-t-8 border-black">
+        <div className="pt-24 mt-24 border-t-8 border-black page-break-before">
            <div className="flex items-center gap-6 mb-12">
               <TrendingUp size={40} />
               <h3 className="text-5xl font-black uppercase tracking-tighter">ANÁLISE DE PROFUNDIDADE</h3>
