@@ -2,13 +2,14 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   Users, Target, Zap, Rocket, Megaphone,
   DollarSign, BarChart3, ShieldCheck, HelpCircle,
-  Plus, X, Save, Trash2, Printer,
-  ArrowRight, Info, AlertTriangle, CheckCircle2,
+  Plus, X, Save, Trash2, Printer, FileText, ClipboardList, TrendingUp, CheckCircle,
+  ArrowRight, Info, AlertTriangle, CheckCircle2, Trophy,
   ChevronDown, ChevronUp, BrainCircuit, Loader2, Sparkles, RotateCcw,
   Lock, Key, Gift, Wand2, Maximize, User, Tag, Download, Settings, Globe, Shield
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import LeanCanvasReport from './LeanCanvasReport';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -118,7 +119,7 @@ export default function LeanCanvas() {
     link.href = url;
     link.download = `lean-canvas-${canvasData.title.toLowerCase().replace(/\s+/g, '-')}.json`;
     link.click();
-    setShowToast(true);
+    setShowToast("Canvas Exportado com Sucesso!");
     setTimeout(() => setShowToast(false), 3000);
   };
 
@@ -152,13 +153,12 @@ export default function LeanCanvas() {
     const promptText = `Analise este Lean Canvas para uma startup. Retorne um JSON com os seguintes campos em PORTUGUÊS (BR):
 - summary: Um resumo estratégico curto e impactante (max 3 sentenças).
 - score: Um valor numérico de 0 a 100.
-- scoreLabel: Uma frase curta de 2-3 palavras sobre a viabilidade (ex: "ALTA VIABILIDADE").
-- strengths: Um array de 3 pontos fortes detectados.
-- risks: Um array de 3 riscos de negócio críticos ou vulnerabilidades.
-- suggestions: Um array de 3 melhorias táticas ou pivots sugeridos.
-- nextSteps: Um array de 3 ações práticas imediatas para o desenvolvimento.
-- verdict: Um veredito final em uma frase impactante.
-- status: "OPERACIONAL" ou "CRÍTICO".
+- scoreLabel: Uma frase curta de 2-3 palavras sobre a viabilidade.
+- strengths: Array de 3 pontos fortes detectados.
+- risks: Array de 3 riscos de negócio críticos ou vulnerabilidades.
+- suggestions: Array de 3 melhorias táticas ou pivots sugeridos.
+- nextSteps: Array de 3 ações práticas imediatas para o desenvolvimento.
+- verdict: Um veredito final em uma frase impactante (max 15 palavras).
 - riskLevel: "BAIXO", "MÉDIO" ou "ALTO".
 
 Canvas: ${JSON.stringify(canvasData)}`;
@@ -219,546 +219,359 @@ Canvas: ${JSON.stringify(canvasData)}`;
   }, [canvasData, aiConfig]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#0f172a] text-[#f8fafc] font-sans p-2.5 gap-2.5 overflow-hidden relative">
+    <div id="lean-canvas-root-container" className="flex flex-col h-screen overflow-hidden bg-[#020617] relative select-none">
       
-      {/* AI Settings Modal */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)} />
-          <div className="w-full max-w-md bg-[#0f172a] border border-cyan-500/30 p-8 relative z-10 shadow-[0_0_100px_rgba(34,211,238,0.1)]">
-              <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                <div className="p-2 bg-cyan-500 rounded-sm text-black">
-                   <Settings size={20} />
-                </div>
-                <div>
-                   <h2 className="text-lg font-black uppercase tracking-tighter text-white">COFRE DE CONFIGURAÇÃO IA</h2>
-                   <p className="text-[9px] font-bold text-cyan-400/60 uppercase tracking-[0.2em]">Ponte de Conexão Neural Universal</p>
-                </div>
-             </div>
+      {/* 1. Interface Interativa (Oculta via CSS ID no momento da impressão) */}
+      <div id="lean-canvas-ui" className="flex flex-col flex-1 overflow-hidden">
+        
+        {/* AI Settings Modal */}
+        {isSettingsOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)} />
+            <div className="w-full max-w-md bg-[#0f172a] border border-cyan-500/30 p-8 relative z-10 shadow-[0_0_100px_rgba(34,211,238,0.1)] text-white">
+                <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+                  <div className="p-2 bg-cyan-500 rounded-sm text-black">
+                     <Settings size={20} />
+                  </div>
+                  <div>
+                     <h2 className="text-lg font-black uppercase tracking-tighter">COFRE DE CONFIGURAÇÃO IA</h2>
+                     <p className="text-[9px] font-bold text-cyan-400/60 uppercase tracking-[0.2em]">Ponte de Conexão Neural Universal</p>
+                  </div>
+               </div>
 
-             <div className="bg-amber-500/10 border-l-2 border-amber-500 p-4 mb-6 animate-pulse">
-                <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1 flex items-center gap-2">
-                  <Shield size={12} /> Aviso de Segurança
-                </p>
-                <p className="text-[9px] font-medium text-white/60 leading-relaxed uppercase">
-                  Suas chaves de API são armazenadas exclusivamente no <b>LocalStorage</b> deste navegador. Recomendamos o uso de chaves com limites de faturamento e a exclusão após o uso.
-                </p>
-             </div>
+               <div className="bg-amber-500/10 border-l-2 border-amber-500 p-4 mb-6 animate-pulse">
+                  <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                    <Shield size={12} /> Aviso de Segurança
+                  </p>
+                  <p className="text-[9px] font-medium text-white/60 leading-relaxed uppercase">
+                    Suas chaves de API são armazenadas exclusivamente no <b>LocalStorage</b> deste navegador. Recomendamos o uso de chaves com limites de faturamento e a exclusão após o uso.
+                  </p>
+               </div>
 
-             <div className="space-y-6">
-                <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase text-white/40 tracking-widest block">PROVEDOR DA API</label>
-                   <select 
-                      value={aiConfig.provider} 
-                      onChange={e => setAiConfig(prev => ({ ...prev, provider: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 p-3 text-xs font-bold text-white outline-none focus:border-cyan-500/50 appearance-none"
-                   >
-                      <option value="gemini">GOOGLE GEMINI (DIRETO)</option>
-                      <option value="openrouter">OPENROUTER (CLAUDE, GPT, LLAMA)</option>
-                      <option value="custom">CUSTOM ENDPOINT (DEEPSEEK, xAI, etc)</option>
-                   </select>
-                </div>
+               <div className="space-y-6">
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase text-white/40 tracking-widest block">PROVEDOR DA API</label>
+                     <select 
+                        value={aiConfig.provider} 
+                        onChange={e => setAiConfig(prev => ({ ...prev, provider: e.target.value }))}
+                        className="w-full bg-black/40 border border-white/10 p-3 text-xs font-bold text-white outline-none focus:border-cyan-500/50 appearance-none"
+                     >
+                        <option value="gemini">GOOGLE GEMINI (DIRETO)</option>
+                        <option value="openrouter">OPENROUTER (CLAUDE, GPT, LLAMA)</option>
+                        <option value="custom">CUSTOM ENDPOINT (DEEPSEEK, xAI, etc)</option>
+                     </select>
+                  </div>
 
-                {aiConfig.provider === 'custom' && (
-                  <div className="space-y-2 animate-in slide-in-from-top duration-200">
-                     <label className="text-[10px] font-black uppercase text-white/40 tracking-widest block">BASE URL DO ENDPOINT</label>
+                  {aiConfig.provider === 'custom' && (
+                    <div className="space-y-2 animate-in slide-in-from-top duration-200">
+                       <label className="text-[10px] font-black uppercase text-white/40 tracking-widest block">BASE URL DO ENDPOINT</label>
+                       <input 
+                          type="text" 
+                          placeholder="https://api.deepseek.com/v1"
+                          value={aiConfig.baseUrl}
+                          onChange={e => setAiConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                          className="w-full bg-black/40 border border-white/10 p-3 text-xs font-bold text-white outline-none focus:border-cyan-500/50"
+                       />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase text-white/40 tracking-widest block">ID DO MODELO</label>
                      <input 
                         type="text" 
-                        placeholder="https://api.deepseek.com/v1"
-                        value={aiConfig.baseUrl}
-                        onChange={e => setAiConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
+                        placeholder={aiConfig.provider === 'gemini' ? "gemini-1.5-flash" : "meta-llama/llama-3-8b-instruct"}
+                        value={aiConfig.modelId}
+                        onChange={e => setAiConfig(prev => ({ ...prev, modelId: e.target.value }))}
                         className="w-full bg-black/40 border border-white/10 p-3 text-xs font-bold text-white outline-none focus:border-cyan-500/50"
                      />
                   </div>
-                )}
 
-                <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase text-white/40 tracking-widest block">ID DO MODELO</label>
-                   <input 
-                      type="text" 
-                      placeholder={aiConfig.provider === 'gemini' ? "gemini-1.5-flash" : "meta-llama/llama-3-8b-instruct"}
-                      value={aiConfig.modelId}
-                      onChange={e => setAiConfig(prev => ({ ...prev, modelId: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 p-3 text-xs font-bold text-white outline-none focus:border-cyan-500/50"
-                   />
-                </div>
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase text-white/40 tracking-widest block text-left flex justify-between items-center">
+                       CHAVE DE API PRIVADA
+                       <span className="flex items-center gap-1 text-emerald-400 capitalize bg-emerald-500/10 px-2 py-0.5"><Shield size={8} /> Local-Only</span>
+                     </label>
+                     <input 
+                        type="password" 
+                        placeholder="sk-...."
+                        value={aiConfig.apiKey}
+                        onChange={e => setAiConfig(prev => ({ ...prev, apiKey: e.target.value }))}
+                        className="w-full bg-black/40 border border-white/10 p-3 text-xs font-bold text-white outline-none focus:border-cyan-500/50"
+                     />
+                  </div>
 
-                <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase text-white/40 tracking-widest block text-left flex justify-between items-center">
-                     CHAVE DE API PRIVADA
-                     <span className="flex items-center gap-1 text-emerald-400 capitalize bg-emerald-500/10 px-2 py-0.5"><Shield size={8} /> Local-Only</span>
-                   </label>
-                   <input 
-                      type="password" 
-                      placeholder="sk-...."
-                      value={aiConfig.apiKey}
-                      onChange={e => setAiConfig(prev => ({ ...prev, apiKey: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 p-3 text-xs font-bold text-white outline-none focus:border-cyan-500/50"
-                   />
-                </div>
-
-                <div className="pt-4 flex flex-col gap-3">
-                   <button 
-                      onClick={() => setIsSettingsOpen(false)}
-                      className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-black text-[10px] uppercase tracking-widest py-3 transition-colors"
-                   >
-                      SALVAR E APLICAR CONEXÃO
-                   </button>
-                   <div className="text-[8px] text-white/20 text-center uppercase tracking-widest flex items-center justify-center gap-2">
-                      <Globe size={10} /> Conexão Criptografada SSL Ativada
-                   </div>
-                </div>
-             </div>
+                  <div className="pt-4 flex flex-col gap-3">
+                     <button 
+                        onClick={() => setIsSettingsOpen(false)}
+                        className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-black text-[10px] uppercase tracking-widest py-3 transition-colors"
+                     >
+                        SALVAR E APLICAR CONEXÃO
+                     </button>
+                     <div className="text-[8px] text-white/20 text-center uppercase tracking-widest flex items-center justify-center gap-2">
+                        <Globe size={10} /> Conexão Criptografada SSL Ativada
+                     </div>
+                  </div>
+               </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {showToast && (
-        <div className="fixed top-20 right-10 z-[100] bg-emerald-500 text-black px-6 py-3 font-black text-[10px] uppercase tracking-[0.3em] animate-in slide-in-from-right duration-300 shadow-2xl">
-           Canvas Exportado com Sucesso!
-        </div>
-      )}
-
-      {/* Header Precise */}
-      <header className="flex items-center justify-between p-2 border-b border-white/10">
-        <div className="flex items-center gap-4">
-          <Rocket className="text-white w-5 h-5" />
-          <input
-            className="text-lg font-black bg-transparent border-none focus:ring-0 p-0 tracking-tight text-white uppercase w-80"
-            value={canvasData.title}
-            onChange={(e) => setCanvasData(prev => ({...prev, title: e.target.value}))}
-          />
-        </div>
-        <div className="hidden lg:flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1 bg-black/20 text-[8px] font-black uppercase border border-white/5 tracking-widest">
-            <div className={cn("w-1.5 h-1.5 rounded-full", isEditing ? "bg-amber-500 animate-pulse" : "bg-emerald-500")} />
-            {isEditing ? "EDITANDO" : "SALVO"} 
+        {showToast && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-emerald-500 text-black px-6 py-3 font-black text-[10px] uppercase tracking-widest shadow-2xl animate-in slide-in-from-top-4 duration-300">
+            {showToast}
           </div>
-           <button 
-            onClick={() => {
-              if (confirm("Carregar dados de exemplo? Isso substituirá seu progresso atual.")) {
-                setCanvasData(DEMO_CANVAS_DATA);
-              }
-            }} 
-            className="sharp-button bg-cyan-400 hover:bg-cyan-300 text-black flex items-center gap-2 px-3 py-1 text-[8px] tracking-widest font-black"
-          >
-             <Sparkles size={12} /> EXEMPLO
-          </button>
-          <button onClick={saveCanvasToFile} className="sharp-button bg-emerald-500 hover:bg-emerald-400 flex items-center gap-2 px-3 py-1 text-[8px] tracking-widest font-black">
-             <Save size={12} />SALVAR
-          </button>
-          <button onClick={() => window.print()} className="sharp-button-dark p-1.5"><Printer size={14} /></button>
-          <button onClick={() => confirm("Deseja realmente apagar todos os campos?") && setCanvasData(emptyCanvasState)} className="sharp-button-dark px-3 py-1 text-[8px] border-red-500/30 hover:bg-red-500/10">REINICIAR</button>
-        </div>
-      </header>
+        )}
 
-      <main className="flex flex-col lg:flex-row gap-3 flex-1 lg:overflow-hidden overflow-y-auto">
-        
-        {/* Mobile Navigation Dots */}
-        <div className="lg:hidden flex justify-center gap-1.5 py-4 border-b border-white/5">
-          {[...Array(7)].map((_, i) => (
-            <div 
-              key={i} 
-              className={cn(
-                "h-1 transition-all duration-300 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.3)]",
-                activeSlide === i ? "w-8 bg-cyan-400" : "w-1.5 bg-white/10"
-              )} 
+        {/* Header Precise */}
+        <header className="flex items-center justify-between p-2 border-b border-white/10">
+          <div className="flex items-center gap-4">
+            <Rocket className="text-white w-5 h-5" />
+            <input
+              className="text-lg font-black bg-transparent border-none focus:ring-0 p-0 tracking-tight text-white uppercase w-80"
+              value={canvasData.title}
+              onChange={(e) => setCanvasData(prev => ({...prev, title: e.target.value}))}
             />
-          ))}
-        </div>
-        
-        {/* Precise Lean Canvas Grid (Responsive Carousel on Mobile) */}
-        <div 
-          onScroll={(e) => {
-            const scrollLeft = e.currentTarget.scrollLeft;
-            const containerWidth = e.currentTarget.offsetWidth;
-            const newIndex = Math.round((scrollLeft + (containerWidth / 4)) / containerWidth);
-            if (newIndex !== activeSlide && newIndex >= 0 && newIndex < 7) setActiveSlide(newIndex);
-          }}
-          className="flex-1 flex lg:grid lg:grid-cols-10 lg:grid-rows-[2fr_1fr] gap-[15px] lg:gap-[10px] h-full overflow-x-auto lg:overflow-visible snap-x snap-mandatory scrollbar-hide px-4 lg:px-0 pb-24 lg:pb-0"
-        >
+          </div>
+          <div className="hidden lg:flex items-center gap-2">
+            <div className="flex items-center gap-2 px-3 py-1 bg-black/20 text-[8px] font-black uppercase border border-white/5 tracking-widest">
+              <div className={cn("w-1.5 h-1.5 rounded-full", isEditing ? "bg-amber-500 animate-pulse" : "bg-emerald-500")} />
+              {isEditing ? "EDITANDO" : "SALVO"} 
+            </div>
+             <button 
+              onClick={() => {
+                if (confirm("Carregar dados de exemplo? Isso substituirá seu progresso atual.")) {
+                  setCanvasData(DEMO_CANVAS_DATA);
+                }
+              }} 
+              className="sharp-button bg-cyan-400 hover:bg-cyan-300 text-black flex items-center gap-2 px-3 py-1 text-[8px] tracking-widest font-black"
+            >
+               <Sparkles size={12} /> EXEMPLO
+            </button>
+            <button onClick={saveCanvasToFile} className="sharp-button bg-emerald-500 hover:bg-emerald-400 flex items-center gap-2 px-3 py-1 text-[8px] tracking-widest font-black">
+               <Save size={12} />SALVAR
+            </button>
+            <button 
+              onClick={() => window.print()} 
+              className="sharp-button bg-white text-black border-2 border-black flex items-center gap-2 px-3 py-1 text-[8px] tracking-widest font-black transition-all hover:bg-black hover:text-white"
+            >
+               <FileText size={12} />RELATÓRIO PDF
+            </button>
+            <button onClick={() => confirm("Deseja realmente apagar todos os campos?") && setCanvasData(emptyCanvasState)} className="sharp-button-dark px-3 py-1 text-[8px] border-red-500/30 hover:bg-red-500/10 text-red-400">REINICIAR</button>
+          </div>
+        </header>
+
+        <main className="flex flex-col lg:flex-row gap-3 flex-1 lg:overflow-hidden overflow-y-auto relative p-2.5">
           
-          {/* Col 1: Problem Card (Purple) - Span 2/10 Desktop */}
-          <CanvasBlock 
-            id="merged_problem" 
-            title="PROBLEMA"
-            bgColor="col-purple" 
-            icon={<Lock size={14}/>}
-            className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-2"
-            subBlocks={[
-              { id: 'problema', title: 'PROBLEMA', data: canvasData.problema, placeholder: "Liste seus 3 principais problemas", icon: <Lock size={14}/> },
-              { id: 'alternativasExistentes', title: 'ALTERNATIVAS EXISTENTES', data: canvasData.alternativasExistentes, placeholder: "Como estes são resolvidos hoje", icon: <ArrowRight size={14}/>, isSubInput: true }
-            ]}
-            onFocus={() => setFocusBlock({ 
-              ids: ['problema', 'alternativasExistentes'], 
-              title: 'PROBLEMA & ALTERNATIVAS', 
-              color: 'col-purple',
-              icon: <Lock size={24}/>
-            })}
-            onUpdate={(sid, d) => updateBlock(sid, d)}
-          />
-
-          {/* Col 2: Solution & Metrics (50/50 Split) - Span 2/10 Desktop */}
-          <div className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-2 grid grid-rows-2 gap-[10px] h-full">
-            <CanvasBlock id="solucao" title="SOLUÇÃO" bgColor="col-orange" icon={<Key size={14}/>} data={canvasData.solucao} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Descreva possíveis soluções" onFocus={() => setFocusBlock({ ids: ['solucao'], title: 'SOLUÇÃO', color: 'col-orange', icon: <Key size={24}/> })} />
-            <CanvasBlock id="metricasChave" title="MÉTRICAS-CHAVE" bgColor="col-orange-dark" icon={<BarChart3 size={14}/>} data={canvasData.metricasChave} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Números-chave para o negócio" onFocus={() => setFocusBlock({ ids: ['metricasChave'], title: 'MÉTRICAS-CHAVE', color: 'col-orange-dark', icon: <BarChart3 size={24}/> })} />
+          {/* Mobile Navigation Dots */}
+          <div className="lg:hidden flex justify-center gap-1.5 py-4 border-b border-white/5">
+            {[...Array(7)].map((_, i) => (
+              <div 
+                key={i} 
+                className={cn(
+                  "h-1 transition-all duration-300 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.3)]",
+                  activeSlide === i ? "w-8 bg-cyan-400" : "w-1.5 bg-white/10"
+                )} 
+              />
+            ))}
           </div>
-
-          {/* Col 3: UVP & Concept (Green Medium) - Span 2/10 */}
-          <CanvasBlock 
-            id="merged_uvp" 
-            title="PROPOSTA DE VALOR"
-            bgColor="col-green-medium" 
-            icon={<Gift size={14}/>}
-            className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-2"
-            subBlocks={[
-              { id: 'propostaValor', title: 'PROPOSTA DE VALOR ÚNICA', data: canvasData.propostaValor, placeholder: "Mensagem única, clara e convincente...", icon: <Gift size={14}/>, isSpecial: true },
-              { id: 'conceitoAltoNivel', title: 'CONCEITO DE ALTO NÍVEL', data: canvasData.conceitoAltoNivel, placeholder: "Analogie: seu X para Y", icon: <Info size={14}/>, isSubInput: true }
-            ]}
-            onFocus={() => setFocusBlock({ 
-              ids: ['propostaValor', 'conceitoAltoNivel'], 
-              title: 'PROPOSTA DE VALOR', 
-              color: 'col-green-medium',
-              icon: <Gift size={24}/>
-            })}
-            onUpdate={(sid, d) => updateBlock(sid, d)}
-          />
-
-          {/* Col 4: Advantage & Channels (50/50 Split) - Span 2/10 Desktop */}
-          <div className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-2 grid grid-rows-2 gap-[10px] h-full">
-             <CanvasBlock id="vantagemCompetitiva" title="VANTAGEM COMPETITIVA" bgColor="col-green-lime" icon={<Wand2 size={14}/>} data={canvasData.vantagemCompetitiva} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Não pode ser copiado facilmente" onFocus={() => setFocusBlock({ ids: ['vantagemCompetitiva'], title: 'VANTAGEM COMPETITIVA', color: 'col-green-lime', icon: <Wand2 size={24}/> })} />
-             <CanvasBlock id="canais" title="CANAIS" bgColor="col-turquesa" icon={<Maximize size={14}/>} data={canvasData.canais} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Caminhos para chegar ao cliente" onFocus={() => setFocusBlock({ ids: ['canais'], title: 'CANAIS', color: 'col-turquesa', icon: <Maximize size={24}/> })} />
-          </div>
-
-          {/* Col 5: Customer Segments (Royal Blue) - Span 2/10 */}
-          <CanvasBlock 
-            id="merged_segments" 
-            title="SEGMENTOS DE CLIENTES"
-            bgColor="col-azul-royal" 
-            icon={<User size={14}/>}
-            className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-2"
-            subBlocks={[
-              { id: 'segmentosClientes', title: 'SEGMENTOS DE CLIENTES', data: canvasData.segmentosClientes, placeholder: "Liste seu público-alvo e usuários", icon: <User size={14}/> },
-              { id: 'adotantesIniciais', title: 'ADOTANTES INICIAIS', data: canvasData.adotantesIniciais, placeholder: "Características do cliente ideal", icon: <Target size={14}/>, isSubInput: true }
-            ]}
-            onFocus={() => setFocusBlock({ 
-              ids: ['segmentosClientes', 'adotantesIniciais'], 
-              title: 'SEGMENTOS & ADOTANTES', 
-              color: 'col-azul-royal',
-              icon: <User size={24}/>
-            })}
-            onUpdate={(sid, d) => updateBlock(sid, d)}
-          />
-
-          {/* Base Row: Costs (span 5) & Revenues (span 5) - Equal Widths Desktop */}
-          <CanvasBlock id="estruturaCustos" title="ESTRUTURA DE CUSTOS" bgColor="col-azul-cobalto" icon={<Tag size={14}/>} data={canvasData.estruturaCustos} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Custos fixos e variáveis" onFocus={() => setFocusBlock({ ids: ['estruturaCustos'], title: 'ESTRUTURA DE CUSTOS', color: 'col-azul-cobalto', icon: <Tag size={24}/> })} className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-5" />
-          <CanvasBlock id="fontesReceita" title="FONTES DE RECEITA" bgColor="col-azul-petroleo" icon={<DollarSign size={14}/>} data={canvasData.fontesReceita} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Fontes de faturamento" onFocus={() => setFocusBlock({ ids: ['fontesReceita'], title: 'FONTES DE RECEITA', color: 'col-azul-petroleo', icon: <DollarSign size={14}/> })} className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-5" />
-        </div>
-
-        {/* AI Control Terminal (Responsive Floating Drawer on Mobile) */}
-        <aside className={cn(
-          "w-full lg:w-[480px] cyber-terminal flex flex-col gap-6 border-cyan-500/10 transition-all duration-500 z-40 shadow-2xl",
-          "fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto",
-          isAnalysisExpanded ? "h-[85dvh] p-6 pb-24 lg:h-auto" : "h-[75px] px-6 py-4 lg:h-auto lg:p-6"
-        )} style={{ 
-          bottom: window.innerWidth < 1024 ? (isAnalysisExpanded ? '0' : '65px') : 'auto',
-          transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}>
-          {/* Mobile Handle / Header Toggle */}
+          
+          {/* Precise Lean Canvas Grid */}
           <div 
-            className="flex items-center justify-between cursor-pointer lg:cursor-default"
-            onClick={() => window.innerWidth < 1024 && setIsAnalysisExpanded(!isAnalysisExpanded)}
+            onScroll={(e) => {
+              const scrollLeft = e.currentTarget.scrollLeft;
+              const containerWidth = e.currentTarget.offsetWidth;
+              const newIndex = Math.round((scrollLeft + (containerWidth / 4)) / containerWidth);
+              if (newIndex !== activeSlide && newIndex >= 0 && newIndex < 7) setActiveSlide(newIndex);
+            }}
+            className="flex-1 flex lg:grid lg:grid-cols-10 lg:grid-rows-[2fr_1fr] gap-[15px] lg:gap-[10px] h-full overflow-x-auto lg:overflow-visible snap-x snap-mandatory scrollbar-hide px-4 lg:px-0 pb-24 lg:pb-0"
           >
-            <div className="flex items-center gap-3">
-              <div className="lg:hidden">
-                {isAnalysisExpanded ? <ChevronDown size={20} className="text-cyan-400" /> : <ChevronUp size={20} className="text-cyan-400 animate-bounce" />}
+            <CanvasBlock id="merged_problem" title="PROBLEMA" bgColor="col-purple" icon={<Lock size={14}/>} className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-2"
+              subBlocks={[
+                { id: 'problema', title: 'PROBLEMA', data: canvasData.problema, placeholder: "Liste seus 3 principais problemas", icon: <Lock size={14}/> },
+                { id: 'alternativasExistentes', title: 'ALTERNATIVAS EXISTENTES', data: canvasData.alternativasExistentes, placeholder: "Como estes são resolvidos hoje", icon: <ArrowRight size={14}/>, isSubInput: true }
+              ]}
+              onFocus={() => setFocusBlock({ ids: ['problema', 'alternativasExistentes'], title: 'PROBLEMA & ALTERNATIVAS', color: 'col-purple', icon: <Lock size={24}/> })}
+              onUpdate={(sid, d) => updateBlock(sid, d)}
+            />
+
+            <div className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-2 grid grid-rows-2 gap-[10px] h-full">
+              <CanvasBlock id="solucao" title="SOLUÇÃO" bgColor="col-orange" icon={<Key size={14}/>} data={canvasData.solucao} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Descreva possíveis soluções" onFocus={() => setFocusBlock({ ids: ['solucao'], title: 'SOLUÇÃO', color: 'col-orange', icon: <Key size={24}/> })} />
+              <CanvasBlock id="metricasChave" title="MÉTRICAS-CHAVE" bgColor="col-orange-dark" icon={<BarChart3 size={14}/>} data={canvasData.metricasChave} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Números-chave para o negócio" onFocus={() => setFocusBlock({ ids: ['metricasChave'], title: 'MÉTRICAS-CHAVE', color: 'col-orange-dark', icon: <BarChart3 size={24}/> })} />
+            </div>
+
+            <CanvasBlock id="merged_uvp" title="PROPOSTA DE VALOR" bgColor="col-green-medium" icon={<Gift size={14}/>} className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-2"
+              subBlocks={[
+                { id: 'propostaValor', title: 'PROPOSTA DE VALOR ÚNICA', data: canvasData.propostaValor, placeholder: "Mensagem única, clara e convincente...", icon: <Gift size={14}/>, isSpecial: true },
+                { id: 'conceitoAltoNivel', title: 'CONCEITO DE ALTO NÍVEL', data: canvasData.conceitoAltoNivel, placeholder: "Analogie: seu X para Y", icon: <Info size={14}/>, isSubInput: true }
+              ]}
+              onFocus={() => setFocusBlock({ ids: ['propostaValor', 'conceitoAltoNivel'], title: 'PROPOSTA DE VALOR', color: 'col-green-medium', icon: <Gift size={24}/> })}
+              onUpdate={(sid, d) => updateBlock(sid, d)}
+            />
+
+            <div className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-2 grid grid-rows-2 gap-[10px] h-full">
+               <CanvasBlock id="vantagemCompetitiva" title="VANTAGEM COMPETITIVA" bgColor="col-green-lime" icon={<Wand2 size={14}/>} data={canvasData.vantagemCompetitiva} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Não pode ser copiado facilmente" onFocus={() => setFocusBlock({ ids: ['vantagemCompetitiva'], title: 'VANTAGEM COMPETITIVA', color: 'col-green-lime', icon: <Wand2 size={24}/> })} />
+               <CanvasBlock id="canais" title="CANAIS" bgColor="col-turquesa" icon={<Maximize size={14}/>} data={canvasData.canais} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Caminhos para chegar ao cliente" onFocus={() => setFocusBlock({ ids: ['canais'], title: 'CANAIS', color: 'col-turquesa', icon: <Maximize size={24}/> })} />
+            </div>
+
+            <CanvasBlock id="merged_segments" title="SEGMENTOS DE CLIENTES" bgColor="col-azul-royal" icon={<User size={14}/>} className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-2"
+              subBlocks={[
+                { id: 'segmentosClientes', title: 'SEGMENTOS DE CLIENTES', data: canvasData.segmentosClientes, placeholder: "Liste seu público-alvo e usuários", icon: <User size={14}/> },
+                { id: 'adotantesIniciais', title: 'ADOTANTES INICIAIS', data: canvasData.adotantesIniciais, placeholder: "Características do cliente ideal", icon: <Target size={14}/>, isSubInput: true }
+              ]}
+              onFocus={() => setFocusBlock({ ids: ['segmentosClientes', 'adotantesIniciais'], title: 'SEGMENTOS & ADOTANTES', color: 'col-azul-royal', icon: <User size={24}/> })}
+              onUpdate={(sid, d) => updateBlock(sid, d)}
+            />
+
+            <CanvasBlock id="estruturaCustos" title="ESTRUTURA DE CUSTOS" bgColor="col-azul-cobalto" icon={<Tag size={14}/>} data={canvasData.estruturaCustos} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Custos fixos e variáveis" onFocus={() => setFocusBlock({ ids: ['estruturaCustos'], title: 'ESTRUTURA DE CUSTOS', color: 'col-azul-cobalto', icon: <Tag size={24}/> })} className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-5" />
+            <CanvasBlock id="fontesReceita" title="FONTES DE RECEITA" bgColor="col-azul-petroleo" icon={<DollarSign size={14}/>} data={canvasData.fontesReceita} onUpdate={(id, d) => updateBlock(id, d)} placeholder="Fontes de faturamento" onFocus={() => setFocusBlock({ ids: ['fontesReceita'], title: 'FONTES DE RECEITA', color: 'col-azul-petroleo', icon: <DollarSign size={24}/> })} className="w-[85vw] md:w-[45vw] lg:w-auto flex-shrink-0 snap-center col-span-1 lg:col-span-5" />
+          </div>
+
+          <aside className={cn(
+            "w-full lg:w-[480px] cyber-terminal flex flex-col gap-6 border-cyan-500/10 transition-all duration-500 z-40 shadow-2xl",
+            "fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:left-auto lg:right-auto",
+            isAnalysisExpanded ? "h-[85dvh] p-6 pb-24 lg:h-auto" : "h-[75px] px-6 py-4 lg:h-auto lg:p-6"
+          )} style={{ 
+            bottom: window.innerWidth < 1024 ? (isAnalysisExpanded ? '0' : '65px') : 'auto',
+            transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}>
+            <div className="flex items-center justify-between cursor-pointer lg:cursor-default" onClick={() => window.innerWidth < 1024 && setIsAnalysisExpanded(!isAnalysisExpanded)}>
+              <div className="flex items-center gap-3">
+                <div className="lg:hidden">
+                  {isAnalysisExpanded ? <ChevronDown size={20} className="text-cyan-400" /> : <ChevronUp size={20} className="text-cyan-400 animate-bounce" />}
+                </div>
+                <h2 className="text-[10px] font-black tracking-[0.5em] text-cyan-400 uppercase leading-none">INTELIGÊNCIA CENTRAL</h2>
               </div>
-              <h2 className="text-[10px] font-black tracking-[0.5em] text-cyan-400 uppercase leading-none">INTELIGÊNCIA CENTRAL</h2>
-              {!isAnalysisExpanded && analysis && (
-                <div className="lg:hidden flex items-center gap-2 px-2 py-0.5 bg-cyan-400/10 rounded-full border border-cyan-400/20">
-                  <span className="text-[8px] font-black text-white">{analysis.score}% SCORE</span>
+              <div className="flex items-center gap-3 text-white">
+                 <button onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }} className="p-1.5 hover:bg-white/5 text-white/30 hover:text-cyan-400 transition-all border border-transparent hover:border-white/10"><Settings size={14} /></button>
+                 <button onClick={(e) => { e.stopPropagation(); performAnalysis(); }} disabled={isAnalyzing || !canAnalyze} className={cn("sharp-button bg-cyan-400 hover:bg-cyan-300", !canAnalyze && "opacity-20 pointer-events-none")}>{isAnalyzing ? "..." : "ANALISAR"}</button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              {isAnalyzing ? (
+                <div className="flex flex-col items-center justify-center h-full gap-12 animate-in fade-in duration-500">
+                  <div className="spinner-3d-container scale-125"><div className="cube-3d"><div className="cube-face face-front"></div><div className="cube-face face-back"></div><div className="cube-face face-right"></div><div className="cube-face face-left"></div><div className="cube-face face-top"></div><div className="cube-face face-bottom"></div><div className="scan-line-3d"></div></div></div>
+                  <div className="text-center space-y-3"><p className="text-[10px] font-black tracking-[0.4em] text-cyan-400 animate-pulse">PROCESSANDO REDE NEURAL</p></div>
+                </div>
+              ) : !analysis ? (
+                <div className="flex flex-col items-center justify-center h-full text-center opacity-30 text-white"><BrainCircuit size={48} className="mb-4 animate-pulse duration-[3s]" /><p className="text-[9px] font-black uppercase tracking-widest leading-loose">Aguardando dados estruturais do canvas para análise sistêmica.</p></div>
+              ) : (
+                <div className="space-y-8 animate-in fade-in duration-700">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white/5 border border-white/10 p-6 flex flex-col items-center justify-center relative overflow-hidden group"><div className="text-5xl font-black text-white tracking-tighter mb-1 relative z-10">{analysis.score}</div><div className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none text-center">SCORE DE VIABILIDADE</div><div className="absolute bottom-0 left-0 h-1 bg-cyan-400 transition-all duration-1000 ease-out" style={{ width: `${analysis.score}%` }} /></div>
+                    <div className="bg-white/5 border border-white/10 p-6 flex flex-col justify-center gap-3">
+                       <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">NÍVEL DE RISCO</div>
+                       <div className={cn("text-[10px] font-black uppercase px-2 py-1 rounded-sm text-center", analysis.riskLevel === 'ALTO' ? 'bg-red-500 text-white' : analysis.riskLevel === 'MÉDIO' ? 'bg-amber-500 text-black' : 'bg-emerald-500 text-black')}>{analysis.riskLevel}</div>
+                    </div>
+                  </div>
+                  <div className="space-y-3"><div className="flex items-center gap-2"><h4 className="text-[10px] font-black uppercase text-white/40 tracking-widest italic">SUMÁRIO ESTRATÉGICO</h4></div><div className="bg-gradient-to-br from-white/5 to-transparent border border-white/5 p-6 relative"><p className="text-[11px] font-medium text-slate-300 leading-relaxed text-justify">{analysis.summary}</p></div></div>
+                  <div className="pt-4 border-t border-white/5"><p className="text-xl font-black italic text-white leading-tight tracking-tighter text-center uppercase">"{analysis.verdict}"</p></div>
+
+                  {/* Novas Seções de Análise Detalhada */}
+                  <div className="space-y-6 pt-6 border-t border-white/5">
+                    
+                    {/* Pontos Fortes */}
+                    <div className="space-y-3">
+                       <h4 className="text-[10px] font-black uppercase text-emerald-400 tracking-widest flex items-center gap-2">
+                          <Trophy size={12} /> PONTOS FORTES
+                       </h4>
+                       <div className="grid gap-2">
+                          {analysis.strengths?.map((s, i) => (
+                             <div key={i} className="bg-emerald-500/5 border border-emerald-500/20 p-3 text-[10px] font-bold text-slate-300 leading-relaxed uppercase">
+                                <span className="text-emerald-400 mr-2">0{i+1}.</span> {s}
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+
+                    {/* Riscos */}
+                    <div className="space-y-3">
+                       <h4 className="text-[10px] font-black uppercase text-red-400 tracking-widest flex items-center gap-2">
+                          <AlertTriangle size={12} /> RISCOS CRÍTICOS
+                       </h4>
+                       <div className="grid gap-2">
+                          {analysis.risks?.map((r, i) => (
+                             <div key={i} className="bg-red-500/5 border border-red-500/20 p-3 text-[10px] font-bold text-slate-300 leading-relaxed uppercase">
+                                <span className="text-red-400 mr-2">!</span> {r}
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+
+                    {/* Roadmap */}
+                    <div className="space-y-3 pb-4">
+                       <h4 className="text-[10px] font-black uppercase text-cyan-400 tracking-widest flex items-center gap-2">
+                          <TrendingUp size={12} /> ROADMAP (PRÓXIMOS PASSOS)
+                       </h4>
+                       <div className="grid gap-2">
+                          {analysis.nextSteps?.map((step, i) => (
+                             <div key={i} className="bg-cyan-500/5 border border-cyan-500/20 p-3 text-[10px] font-bold text-slate-300 leading-relaxed uppercase flex gap-3">
+                                <div className="w-4 h-4 rounded-full bg-cyan-400 text-black flex items-center justify-center shrink-0 text-[8px] font-black">{i+1}</div>
+                                {step}
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+
+                    <div className="text-[8px] text-white/10 text-center uppercase tracking-[0.4em] pt-4">RELATÓRIO DIAGNÓSTICO COMPLETO</div>
+                  </div>
                 </div>
               )}
             </div>
-            
-            <div className="flex items-center gap-3">
-               <button 
-                onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }}
-                className="p-1.5 hover:bg-white/5 text-white/30 hover:text-cyan-400 transition-all border border-transparent hover:border-white/10"
-               >
-                <Settings size={14} />
-               </button>
-               <button 
-                onClick={(e) => { e.stopPropagation(); performAnalysis(); }}
-                disabled={isAnalyzing || !canAnalyze}
-                className={cn("sharp-button bg-cyan-400 hover:bg-cyan-300", !canAnalyze && "opacity-20 pointer-events-none")}
-               >
-                {isAnalyzing ? "..." : "ANALISAR"}
-               </button>
-            </div>
-          </div>
+          </aside>
+        </main>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {isAnalyzing ? (
-              <div className="flex flex-col items-center justify-center h-full gap-12 animate-in fade-in duration-500">
-                <div className="spinner-3d-container scale-125">
-                  <div className="cube-3d">
-                    <div className="cube-face face-front"></div>
-                    <div className="cube-face face-back"></div>
-                    <div className="cube-face face-right"></div>
-                    <div className="cube-face face-left"></div>
-                    <div className="cube-face face-top"></div>
-                    <div className="cube-face face-bottom"></div>
-                    <div className="scan-line-3d"></div>
-                  </div>
-                </div>
-                <div className="text-center space-y-3">
-                   <p className="text-[10px] font-black tracking-[0.4em] text-cyan-400 animate-pulse">PROCESSANDO REDE NEURAL</p>
-                   <p className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Codificando parâmetros de viabilidade...</p>
-                </div>
-              </div>
-            ) : !analysis ? (
-              <div className="flex flex-col items-center justify-center h-full text-center opacity-30 text-white">
-                <BrainCircuit size={48} className="mb-4 animate-pulse duration-[3s]" />
-                <p className="text-[9px] font-black uppercase tracking-widest leading-loose">Aguardando dados estruturais do canvas para análise sistêmica.</p>
-                <div className="w-full bg-white/5 h-0.5 mt-8 relative">
-                   <div className="absolute inset-0 bg-cyan-400" style={{ width: `${calculateReadiness()}%` }} />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-8 animate-in fade-in duration-700">
-                
-                {/* Score & Risk Section */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white/5 border border-white/10 p-6 flex flex-col items-center justify-center relative overflow-hidden group">
-                     <div className="absolute top-0 left-0 w-full h-1 bg-cyan-400/20" />
-                     <div className="text-5xl font-black text-white tracking-tighter mb-1 relative z-10">{analysis.score}</div>
-                     <div className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none text-center">SCORE DE VIABILIDADE</div>
-                     {/* Decorative Gauge line */}
-                     <div className="absolute bottom-0 left-0 h-1 bg-cyan-400 transition-all duration-1000 ease-out" style={{ width: `${analysis.score}%` }} />
-                  </div>
-                  <div className="bg-white/5 border border-white/10 p-6 flex flex-col justify-center gap-3">
-                     <div>
-                        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1 text-left">NÍVEL DE RISCO</div>
-                        <div className={cn("text-[10px] font-black uppercase px-2 py-1 rounded-sm text-center inline-block", 
-                           analysis.riskLevel === 'ALTO' ? 'bg-red-500 text-white' : 
-                           analysis.riskLevel === 'MÉDIO' ? 'bg-amber-500 text-black' : 'bg-emerald-500 text-black'
-                        )}>{analysis.riskLevel}</div>
-                     </div>
-                     <div>
-                        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1 text-left">STATUS</div>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-white tracking-tight">
-                           <div className={cn("w-2 h-2 rounded-full animate-pulse", analysis.status === 'CRÍTICO' ? 'bg-red-500' : 'bg-emerald-500')} />
-                           {analysis.status}
-                        </div>
-                     </div>
-                  </div>
-                </div>
-
-                {/* Summary Section */}
-                <div className="space-y-3">
-                   <div className="flex items-center gap-2">
-                      <div className="w-4 h-px bg-cyan-400" />
-                      <h4 className="text-[10px] font-black uppercase text-white/40 tracking-widest italic">SUMÁRIO ESTRATÉGICO</h4>
-                   </div>
-                   <div className="bg-gradient-to-br from-white/5 to-transparent border border-white/5 p-6 relative">
-                      <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-cyan-400" />
-                      <p className="text-[11px] font-medium text-slate-300 leading-relaxed text-justify">
-                         {analysis.summary}
-                      </p>
-                   </div>
-                </div>
-
-                {/* Strengths Cards */}
-                <div className="space-y-4">
-                   <h4 className="text-[8px] font-black uppercase text-emerald-400 tracking-widest text-center">PONTOS FORTES DETECTADOS</h4>
-                   <div className="grid grid-cols-1 gap-2">
-                      {analysis.strengths?.map((s, i) => (
-                        <div key={i} className="flex items-center gap-4 p-3 bg-emerald-500/5 border border-emerald-500/10 hover:bg-emerald-500/10 transition-all group">
-                           <div className="p-1 bg-emerald-500/10 group-hover:bg-emerald-500/20 transition-colors">
-                              <CheckCircle2 size={12} className="text-emerald-500" />
-                           </div>
-                           <p className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">{s}</p>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-
-                {/* Risks Section */}
-                <div className="space-y-4">
-                   <h4 className="text-[8px] font-black uppercase text-red-400 tracking-widest text-center">ANÁLISE DE RISCOS E VULNERABILIDADES</h4>
-                   <div className="grid grid-cols-1 gap-2">
-                      {analysis.risks?.map((r, i) => (
-                        <div key={i} className="flex items-center gap-4 p-3 bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition-all group">
-                           <div className="p-1 bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
-                              <AlertTriangle size={12} className="text-red-500" />
-                           </div>
-                           <p className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">{r}</p>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-
-                {/* Suggestions Section */}
-                <div className="space-y-4">
-                   <h4 className="text-[8px] font-black uppercase text-amber-400 tracking-widest text-center">PLANO DE OTIMIZAÇÃO TÁTICA</h4>
-                   <div className="grid grid-cols-1 gap-2">
-                      {analysis.suggestions?.map((s, i) => (
-                        <div key={i} className="flex items-center gap-4 p-3 bg-amber-500/5 border border-amber-500/10 hover:bg-amber-500/10 transition-all group">
-                           <div className="p-1 bg-amber-500/10 group-hover:bg-amber-500/20 transition-colors">
-                              <Sparkles size={12} className="text-amber-500" />
-                           </div>
-                           <p className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">{s}</p>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-
-                {/* Next Steps Roadmap */}
-                <div className="space-y-4">
-                   <h4 className="text-[8px] font-black uppercase text-cyan-400 tracking-widest text-center">ROTEIRO DE DESENVOLVIMENTO</h4>
-                   <div className="grid grid-cols-1 gap-2">
-                      {analysis.nextSteps?.map((ns, i) => (
-                        <div key={i} className="flex items-center gap-4 p-3 bg-cyan-500/5 border border-cyan-500/10 hover:bg-cyan-500/10 transition-all group relative overflow-hidden">
-                           <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500/40" />
-                           <div className="text-[14px] font-black italic text-cyan-400/30">{i + 1}</div>
-                           <p className="text-[10px] font-bold text-slate-300 uppercase tracking-tight">{ns}</p>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-
-                {/* Big Verdict Quote */}
-                <div className="pt-4 border-t border-white/5">
-                   <p className="text-xl font-black italic text-white leading-tight tracking-tighter text-center uppercase indent-4">
-                      "{analysis.verdict}"
-                   </p>
-                </div>
-
-                {/* Bottom decorative stats */}
-                <div className="flex justify-between items-center opacity-20 border-b border-white/10 pb-4">
-                   <div className="text-[7px] font-mono whitespace-nowrap">ID_{Math.random().toString(16).substring(2, 10).toUpperCase()}</div>
-                   <div className="text-[7px] font-mono">REDE_NEURAL_V2.5</div>
-                   <div className="text-[7px] font-mono">{new Date().toLocaleTimeString()}</div>
-                </div>
-              </div>
-            )}
-          </div>
-        </aside>
-      </main>
-
-        {/* Mobile Sticky Footer Actions (Menu Inferior) */}
+        {/* Mobile Actions */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#020617]/95 backdrop-blur-xl border-t border-white/10 px-6 py-3 flex items-center justify-between shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-          <div className="flex items-center gap-3">
-            <div className={cn("w-2 h-2 rounded-full", isEditing ? "bg-amber-500 animate-pulse" : "bg-emerald-500")} />
-            <span className="text-[9px] font-black tracking-widest text-white/40 uppercase">
-              {isEditing ? "Processando..." : "Sincronizado"}
-            </span>
-          </div>
           <div className="flex items-center gap-2">
-            <button 
-              onClick={() => confirm("Carregar dados de exemplo?") && setCanvasData(DEMO_CANVAS_DATA)}
-              className="p-3 bg-cyan-500 text-black rounded-sm active:scale-95 transition-all"
-            >
-              <Sparkles size={20} />
-            </button>
-            <button onClick={saveCanvasToFile} className="p-3 bg-emerald-500 text-black rounded-sm shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">
-              <Save size={20} />
-            </button>
-            <button onClick={() => window.print()} className="p-3 bg-white/5 text-white/40 border border-white/10 rounded-sm active:scale-95 transition-all">
-              <Printer size={20} />
-            </button>
-            <button 
-              onClick={() => confirm("Deseja realmente apagar todos os campos?") && setCanvasData(emptyCanvasState)} 
-              className="p-3 bg-white/5 text-red-500/60 border border-red-500/10 rounded-sm active:scale-95 transition-all"
-            >
-              <RotateCcw size={20} />
+            <button onClick={() => confirm("Carregar dados de exemplo?") && setCanvasData(DEMO_CANVAS_DATA)} className="p-3 bg-cyan-500 text-black rounded-sm active:scale-95 transition-all"><Sparkles size={20} /></button>
+            <button onClick={saveCanvasToFile} className="p-3 bg-emerald-500 text-black rounded-sm active:scale-95 transition-all"><Save size={20} /></button>
+            <button onClick={() => window.print()} className="flex items-center gap-2 p-3 bg-white text-black border-2 border-black rounded-sm active:scale-95 transition-all outline-none">
+              <FileText size={20} /> <span className="text-[10px] font-black">RELATÓRIO</span>
             </button>
           </div>
-      </div>
-
-      {/* Focus Mode Overlay */}
-      {focusBlock && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 animate-in zoom-in-95 duration-200">
-           <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setFocusBlock(null)} />
-           <div className="w-full max-w-4xl bg-[#0f172a] border-4 border-white p-6 md:p-10 relative z-10 shadow-[20px_20px_0px_rgba(0,0,0,1)] overflow-y-auto max-h-[90vh]">
-              <div className="flex items-center justify-between mb-8 border-b-4 border-black pb-6">
-                 <div className="flex items-center gap-6">
-                    <div className={cn("p-4 border-4 border-black text-black shadow-[4px_4px_0px_rgba(0,0,0,1)]", focusBlock.color)}>
-                       {focusBlock.icon}
-                    </div>
-                    <div>
-                       <h2 className="text-3xl font-black uppercase tracking-tighter text-white">{focusBlock.title}</h2>
-                       <p className="text-[10px] font-bold text-cyan-400 mt-1 uppercase tracking-[0.2em]">Parâmetro Estratégico do Modelo de Negócio</p>
-                    </div>
-                 </div>
-                 <button onClick={() => setFocusBlock(null)} className="p-3 hover:bg-white/10 text-white/40 hover:text-white transition-all border-4 border-transparent hover:border-white">
-                    <X size={32} />
-                 </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <div className="space-y-8">
-                    {focusBlock.ids.map(id => (
-                       <div key={id} className="space-y-4">
-                          <label className="text-[10px] font-black uppercase text-white/40 tracking-[0.3em] block">Entrada de Dados: {id}</label>
-                          <textarea 
-                             autoFocus
-                             className="w-full h-48 bg-black/40 border-4 border-white/10 p-6 text-lg font-bold text-white outline-none focus:border-cyan-500/50 resize-none transition-all"
-                             placeholder={blockHelp[id]}
-                             value={canvasData[id].headline !== undefined ? canvasData[id].headline : canvasData[id].items.join('\n')}
-                             onChange={(e) => {
-                                const val = e.target.value;
-                                if (canvasData[id].headline !== undefined) {
-                                   updateBlock(id, { headline: val });
-                                } else {
-                                   updateBlock(id, { items: val.split('\n') });
-                                }
-                             }}
-                          />
-                       </div>
-                    ))}
-                 </div>
-                 <div className="bg-white/5 border-4 border-white/5 p-8 flex flex-col gap-6">
-                    <div className="flex items-center gap-4 text-cyan-400">
-                       <HelpCircle size={24} />
-                       <h3 className="text-sm font-black uppercase tracking-widest">Guia Estratégico</h3>
-                    </div>
-                    <div className="space-y-6">
-                       {focusBlock.ids.map(id => (
-                          <div key={id} className="p-6 bg-black/40 border-l-4 border-cyan-500">
-                             <h4 className="text-[10px] font-black uppercase text-cyan-500 mb-2">{id}</h4>
-                             <p className="text-xs text-white/60 leading-relaxed font-medium italic">{blockHelp[id]}</p>
-                          </div>
-                       ))}
-                    </div>
-                 </div>
-              </div>
-
-              <div className="mt-10 flex justify-end">
-                 <button 
-                  onClick={() => setFocusBlock(null)}
-                  className="sharp-button bg-cyan-400 hover:bg-cyan-300 text-black px-10 py-4 text-xs font-black"
-                 >
-                  CONCLUIR EDIÇÃO
-                 </button>
-              </div>
-           </div>
         </div>
-      )}
 
-      {/* Onboarding Tour Overlay */}
-      {tourStep !== -1 && (
-        <TourOverlay 
-          step={tourStep} 
-          onNext={() => setTourStep(prev => prev + 1)} 
-          onSkip={() => {
-            localStorage.setItem('lean_canvas_tour_completed', 'true');
-            setTourStep(-1);
-          }}
-          isMobile={window.innerWidth < 1024}
-        />
-      )}
+        {/* Overlays */}
+        {focusBlock && (
+          <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 md:p-8 animate-in zoom-in-95 duration-200">
+             <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={() => setFocusBlock(null)} />
+             <div className="w-full max-w-4xl bg-[#0f172a] border-4 border-white p-6 md:p-10 relative z-10 shadow-[20px_20px_0px_rgba(0,0,0,1)] overflow-y-auto max-h-[90vh]">
+                <div className="flex items-center justify-between mb-8 border-b-4 border-black pb-6 text-white font-black uppercase">
+                   <h2 className="text-3xl tracking-tighter">{focusBlock.title}</h2>
+                   <button onClick={() => setFocusBlock(null)} className="p-3 hover:bg-white/10 transition-all"><X size={32} /></button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <div className="space-y-8">
+                      {focusBlock.ids.map(id => (
+                         <div key={id} className="space-y-4">
+                            <label className="text-[10px] font-black uppercase text-white/40 tracking-[0.3em] block">Entrada de Dados: {id}</label>
+                            <textarea autoFocus className="w-full h-48 bg-black/40 border-4 border-white/10 p-6 text-lg font-bold text-white outline-none focus:border-cyan-500/50 resize-none transition-all" placeholder={blockHelp[id]} value={canvasData[id].headline !== undefined ? canvasData[id].headline : canvasData[id].items.join('\n')} onChange={(e) => { const val = e.target.value; if (canvasData[id].headline !== undefined) { updateBlock(id, { headline: val }); } else { updateBlock(id, { items: val.split('\n') }); } }} />
+                         </div>
+                      ))}
+                   </div>
+                   <div className="bg-white/5 border-4 border-white/5 p-8 flex flex-col gap-6 text-white">
+                      <div className="flex items-center gap-4 text-cyan-400"><HelpCircle size={24} /><h3>Guia Estratégico</h3></div>
+                      <div className="space-y-6">
+                        {focusBlock.ids.map(id => (<div key={id} className="p-6 bg-black/40 border-l-4 border-cyan-500"><h4 className="text-[10px] font-black uppercase text-cyan-500 mb-2">{id}</h4><p className="text-xs text-white/60 leading-relaxed font-medium italic">{blockHelp[id]}</p></div>))}
+                      </div>
+                   </div>
+                </div>
+                <div className="mt-10 flex justify-end"><button onClick={() => setFocusBlock(null)} className="sharp-button bg-cyan-400 hover:bg-cyan-300 text-black px-10 py-4 text-xs font-black">CONCLUIR EDIÇÃO</button></div>
+             </div>
+          </div>
+        )}
+
+        {tourStep !== -1 && (
+          <TourOverlay step={tourStep} onNext={() => setTourStep(prev => prev + 1)} onSkip={() => { localStorage.setItem('lean_canvas_tour_completed', 'true'); setTourStep(-1); }} isMobile={window.innerWidth < 1024} />
+        )}
+
+      </div> {/* Fim Interface Interativa (#lean-canvas-ui) */}
+
+      {/* 2. Relatório PDF (Renderizado em container com ID controlado via CSS) */}
+      <div id="lean-canvas-report">
+        <LeanCanvasReport canvasData={canvasData} analysis={analysis} />
+      </div>
 
     </div>
   );
@@ -783,7 +596,6 @@ function BlockEntries({ blockId, blockData, blockTitle, blockIcon, blockPlacehol
             <h3 className="text-[12px] font-black uppercase tracking-[0.1em] text-white/90">{blockTitle}</h3>
          </div>
          
-         {/* Help Button - More Prominent */}
          <div className="group/help relative flex items-center justify-center">
             <div className="p-1 hover:bg-white/10 rounded-full transition-colors cursor-help">
                <HelpCircle size={14} className="text-white/40 group-hover/help:text-cyan-400 transition-colors" />
@@ -963,7 +775,7 @@ function TourOverlay({ step, onNext, onSkip, isMobile }) {
              <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{step + 1}/{steps.length}</span>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-3 font-sans">
             <h3 className="text-xl font-black text-white leading-tight uppercase italic">{currentStep.title}</h3>
             <p className="text-xs font-medium text-white/60 leading-relaxed">{currentStep.text}</p>
           </div>
@@ -984,7 +796,6 @@ function TourOverlay({ step, onNext, onSkip, isMobile }) {
           </div>
         </div>
 
-        {/* Small pointer for context if on desktop */}
         {!isMobile && currentStep.target && (
            <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rotate-45 bg-white" />
         )}
