@@ -5,7 +5,7 @@ import {
   Plus, X, Save, Trash2, Printer, FileText, ClipboardList, TrendingUp, CheckCircle,
   ArrowRight, Info, AlertTriangle, CheckCircle2, Trophy,
   ChevronDown, ChevronUp, BrainCircuit, Loader2, Sparkles, RotateCcw,
-  Lock, Key, Gift, Wand2, Maximize, User, Tag, Download, Settings, Globe, Shield
+  Lock, Key, Gift, Wand2, Maximize, User, Tag, Download, Settings, Globe, Shield, FolderOpen
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -90,6 +90,7 @@ export default function LeanCanvas() {
   const [focusBlock, setFocusBlock] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
+  const fileInputRef = useRef(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [aiConfig, setAiConfig] = useState(() => {
@@ -129,6 +130,33 @@ export default function LeanCanvas() {
       ...prev,
       [blockId]: { ...prev[blockId], ...data }
     }));
+  };
+
+  const handleOpenFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = JSON.parse(event.target.result);
+        
+        // Validação básica da estrutura
+        if (!content.title || !content.problema) {
+          throw new Error("Formato de arquivo inválido. Por favor, selecione um JSON do Lean Canvas.");
+        }
+
+        setCanvasData(content);
+        setShowToast("Canvas Carregado com Sucesso!");
+        setTimeout(() => setShowToast(false), 3000);
+      } catch (err) {
+        console.error("Erro ao carregar arquivo:", err);
+        alert(err.message || "Erro ao processar o arquivo JSON.");
+      }
+    };
+    reader.readAsText(file);
+    // Limpar o input para permitir carregar o mesmo arquivo novamente se necessário
+    e.target.value = '';
   };
 
   const calculateReadiness = () => {
@@ -347,6 +375,12 @@ Canvas: ${JSON.stringify(canvasData)}`;
             >
                <Sparkles size={12} /> EXEMPLO
             </button>
+            <button 
+               onClick={() => fileInputRef.current.click()} 
+               className="sharp-button bg-amber-400 hover:bg-amber-300 text-black flex items-center gap-2 px-3 py-1 text-[8px] tracking-widest font-black"
+            >
+               <FolderOpen size={12} />ABRIR
+            </button>
             <button onClick={saveCanvasToFile} className="sharp-button bg-emerald-500 hover:bg-emerald-400 flex items-center gap-2 px-3 py-1 text-[8px] tracking-widest font-black">
                <Save size={12} />SALVAR
             </button>
@@ -529,7 +563,15 @@ Canvas: ${JSON.stringify(canvasData)}`;
         {/* Mobile Actions */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#020617]/95 backdrop-blur-xl border-t border-white/10 px-6 py-3 flex items-center justify-between shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
           <div className="flex items-center gap-2">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept=".json" 
+              onChange={handleOpenFile} 
+            />
             <button onClick={() => confirm("Carregar dados de exemplo?") && setCanvasData(DEMO_CANVAS_DATA)} className="p-3 bg-cyan-500 text-black rounded-sm active:scale-95 transition-all"><Sparkles size={20} /></button>
+            <button onClick={() => fileInputRef.current.click()} className="p-3 bg-amber-400 text-black rounded-sm active:scale-95 transition-all"><FolderOpen size={20} /></button>
             <button onClick={saveCanvasToFile} className="p-3 bg-emerald-500 text-black rounded-sm active:scale-95 transition-all"><Save size={20} /></button>
             <button 
               onClick={() => {
@@ -757,10 +799,16 @@ function TourOverlay({ step, onNext, onSkip, isMobile }) {
       icon: <BrainCircuit size={24} className="text-cyan-400" />
     },
     {
-      title: "AÇÕES E EXPORTAÇÃO",
-      text: "Salve seu progresso localmente, imprima em PDF ou reinicie o canvas no menu inferior. Tudo pronto para começar!",
+      title: "GERENCIAMENTO DE ARQUIVOS",
+      text: "Salve seu progresso no computador como JSON ou abra um projeto existente para continuar editando de onde parou.",
       pos: "bottom",
-      icon: <Save size={24} className="text-emerald-400" />
+      icon: <FolderOpen size={24} className="text-amber-400" />
+    },
+    {
+      title: "EXPORTAÇÃO E LIMPEZA",
+      text: "Gere seu relatório PDF executivo ou reinicie o canvas no menu inferior. Tudo pronto para começar!",
+      pos: "bottom",
+      icon: <FileText size={24} className="text-emerald-400" />
     }
   ];
 
@@ -773,7 +821,7 @@ function TourOverlay({ step, onNext, onSkip, isMobile }) {
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[#020617]/90 backdrop-blur-md" />
+      <div className="absolute inset-0 bg-[#020617]/40" />
       
       <div className={cn(
         "relative w-full max-w-sm bg-[#0f172a] border-4 border-white p-8 shadow-[20px_20px_0px_rgba(0,0,0,1)] animate-in zoom-in-95 duration-300",
