@@ -25,7 +25,7 @@ const LeanCanvasReport = ({ canvasData, analysis }) => {
       {/* Header Executive */}
       <div className="flex justify-between items-end border-b-8 border-black pb-8 mb-12">
         <div>
-          <h1 className="text-6xl font-black uppercase tracking-tighter leading-none mb-3">EXECUTIVE REPORT</h1>
+          <h1 className="text-4xl font-black uppercase tracking-tighter leading-none mb-3">RELATÓRIO DE ANÁLISE DE VIABILIDADE</h1>
           <p className="text-[12px] font-black text-slate-500 uppercase tracking-[0.5em]">Diagnóstico de Modelo de Negócio</p>
         </div>
         <div className="text-right">

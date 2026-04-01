@@ -351,7 +351,12 @@ Canvas: ${JSON.stringify(canvasData)}`;
                <Save size={12} />SALVAR
             </button>
             <button 
-              onClick={() => window.print()} 
+              onClick={() => {
+                const originalTitle = document.title;
+                document.title = "Relatório de análise de viabilidade";
+                window.print();
+                document.title = originalTitle;
+              }} 
               className="sharp-button bg-white text-black border-2 border-black flex items-center gap-2 px-3 py-1 text-[8px] tracking-widest font-black transition-all hover:bg-black hover:text-white"
             >
                <FileText size={12} />RELATÓRIO PDF
@@ -526,7 +531,15 @@ Canvas: ${JSON.stringify(canvasData)}`;
           <div className="flex items-center gap-2">
             <button onClick={() => confirm("Carregar dados de exemplo?") && setCanvasData(DEMO_CANVAS_DATA)} className="p-3 bg-cyan-500 text-black rounded-sm active:scale-95 transition-all"><Sparkles size={20} /></button>
             <button onClick={saveCanvasToFile} className="p-3 bg-emerald-500 text-black rounded-sm active:scale-95 transition-all"><Save size={20} /></button>
-            <button onClick={() => window.print()} className="flex items-center gap-2 p-3 bg-white text-black border-2 border-black rounded-sm active:scale-95 transition-all outline-none">
+            <button 
+              onClick={() => {
+                const originalTitle = document.title;
+                document.title = "Relatório de análise de viabilidade";
+                window.print();
+                document.title = originalTitle;
+              }} 
+              className="flex items-center gap-2 p-3 bg-white text-black border-2 border-black rounded-sm active:scale-95 transition-all outline-none"
+            >
               <FileText size={20} /> <span className="text-[10px] font-black">RELATÓRIO</span>
             </button>
           </div>
