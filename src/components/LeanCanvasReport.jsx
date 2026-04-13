@@ -73,6 +73,64 @@ const LeanCanvasReport = ({ canvasData, analysis }) => {
         </div>
       )}
 
+      {/* Deep Validation Metrics Section */}
+      {analysis && (
+        <div className="mb-16 grid grid-cols-1 md:grid-cols-2 gap-12 break-inside-avoid">
+           <div className="space-y-6">
+              <h3 className="text-xl font-black uppercase tracking-widest border-b-4 border-black pb-2">Validação de Estágio</h3>
+              <div className="grid grid-cols-1 gap-4">
+                    <div className="p-6 bg-slate-50 border-2 border-black flex justify-between items-center">
+                    <div>
+                       <p className="text-[10px] font-black uppercase text-slate-400">Ajuste Problema-Solução (PSF)</p>
+                       <p className="text-xs font-bold text-slate-600 uppercase">A sua solução resolve a dor do cliente?</p>
+                    </div>
+                    <div className="text-3xl font-black text-indigo-600">{analysis.psfScore || 0}%</div>
+                 </div>
+                 <div className="p-6 bg-slate-50 border-2 border-black flex justify-between items-center">
+                    <div>
+                       <p className="text-[10px] font-black uppercase text-slate-400">Ajuste Produto-Mercado (PMF)</p>
+                       <p className="text-xs font-bold text-slate-600 uppercase">O mercado quer pagar e continuar com você?</p>
+                    </div>
+                    <div className="text-3xl font-black text-emerald-600">{analysis.pmfScore || 0}%</div>
+                 </div>
+              </div>
+           </div>
+           
+           <div className="space-y-6">
+              <h3 className="text-xl font-black uppercase tracking-widest border-b-4 border-black pb-2">Testes de Estresse</h3>
+              <div className="grid grid-cols-1 gap-3">
+                 {analysis.heuristicsTests && Object.entries(analysis.heuristicsTests).map(([key, test]) => (
+                    <div key={key} className="flex items-center gap-4 p-4 border-2 border-black">
+                       <div className={cn(
+                          "w-4 h-4 rounded-full",
+                          test.status === 'PASSOU' ? 'bg-emerald-500' : test.status === 'FALHOU' ? 'bg-red-500' : 'bg-amber-500'
+                       )} />
+                       <div className="flex-1">
+                          <p className="text-[9px] font-black uppercase tracking-widest">
+                             {key === 'especificidade' ? 'Foco Estratégico (Specificity)' : 
+                              key === 'consistenciaCanais' ? 'Conexão com Cliente (Consistency)' : 
+                              key === 'viabilidadeFinanceira' ? 'Potencial de Lucro (Viability)' : 
+                              'Sustentabilidade (Unfair Advantage)'}
+                          </p>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase leading-none">{test.comentario}</p>
+                       </div>
+                       <div className="text-[10px] font-black uppercase italic opacity-30">{test.status}</div>
+                    </div>
+                 ))}
+              </div>
+           </div>
+
+           {analysis.benchmarksCheck && (
+              <div className="col-span-1 md:col-span-2 p-8 bg-black text-white">
+                 <h4 className="text-xs font-black uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                    <BarChart3 size={16} /> Saúde Financeira & Comparação de Mercado (Benchmarks)
+                 </h4>
+                 <p className="text-xs font-bold leading-relaxed uppercase italic text-white/80">{analysis.benchmarksCheck}</p>
+              </div>
+           )}
+        </div>
+      )}
+
       {/* NEW: MAPEAMENTO POR TÓPICOS (Categorizado) */}
       <div className="space-y-16">
         

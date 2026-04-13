@@ -220,16 +220,39 @@ export default function LeanCanvas() {
     }
     
     setIsAnalyzing(true);
-    const promptText = `Analise este Lean Canvas para uma startup. Retorne um JSON com os seguintes campos em PORTUGUÊS (BR):
-- summary: Um resumo estratégico curto e impactante (max 3 sentenças).
-- score: Um valor numérico de 0 a 100.
-- scoreLabel: Uma frase curta de 2-3 palavras sobre a viabilidade.
-- strengths: Array de 3 pontos fortes detectados.
-- risks: Array de 3 riscos de negócio críticos ou vulnerabilidades.
-- suggestions: Array de 3 melhorias táticas ou pivots sugeridos.
-- nextSteps: Array de 3 ações práticas imediatas para o desenvolvimento.
-- verdict: Um veredito final em uma frase impactante (max 15 palavras).
+    const promptText = `Você é um Mentor Pedagógico para fundadores de startups de primeira viagem.
+Sua tarefa é realizar uma análise rigorosa e educativa do Lean Canvas fornecido abaixo, seguindo estas diretrizes de comunicação:
+
+1. PADRÃO DE LINGUAGEM:
+- Use descrições em português seguidas pelo termo técnico em inglês entre parênteses. 
+  Exemplos: "Ajuste entre Problema e Solução (Problem-Solution Fit)", "Valor Vitalício do Cliente (LTV)", "Custo de Aquisição (CAC)".
+- O tom deve ser encorajador, mas manter a criticidade necessária para reduzir riscos.
+- Use analogias se necessário para explicar conceitos financeiros ou de métricas.
+
+2. DIRETRIZES DE ANÁLISE:
+- Avalie o estágio atual: Problema-Solução (PSF) ou Produto-Mercado (PMF).
+- Verifique se os problemas e segmentos são específicos o suficiente (Teste de Especificidade).
+- Analise a Vantagem Injusta: Explique se é algo realmente defensável ou apenas "boa execução".
+- Heurísticas: Execute testes de estresse (Especificidade, Consistência Canais, Viabilidade) e explique o resultado didaticamente.
+
+Retorne EXCLUSIVAMENTE um JSON com os seguintes campos em PORTUGUÊS (BR):
+- summary: Um resumo estratégico didático (max 3 sentenças).
+- score: Um valor numérico global de 0 a 100.
+- psfScore: Pontuação de Ajuste Problema-Solução (PSF) de 0 a 100.
+- pmfScore: Pontuação de Ajuste Produto-Mercado (PMF) de 0 a 100.
+- scoreLabel: Uma frase curta de 2-3 palavras sobre o progresso.
+- strengths: Array de 3 pontos fortes.
+- risks: Array de 3 riscos críticos explicados de forma simples.
+- suggestions: Array de 3 sugestões táticas de "como fazer".
+- nextSteps: Array de 3 ações práticas imediatas.
+- verdict: Um veredito final empoderador e honesto (max 15 palavras).
 - riskLevel: "BAIXO", "MÉDIO" ou "ALTO".
+- heuristicsTests: Objeto com status ("PASSOU", "FALHOU" ou "AVISO") e comentário didático curto para:
+    - especificidade
+    - consistenciaCanais
+    - viabilidadeFinanceira
+    - vantagemInjusta
+- benchmarksCheck: Comparação breve com números de mercado de forma simples.
 
 Canvas: ${JSON.stringify(canvasData)}`;
 
@@ -263,6 +286,20 @@ Canvas: ${JSON.stringify(canvasData)}`;
       }
 
       const resp = await fetch(url, { method: "POST", headers, body });
+      
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        console.error("Erro na API:", resp.status, errorData);
+        
+        if (resp.status === 503) {
+          throw new Error(`Modelo indisponível (503). O ID '${aiConfig.modelId}' pode estar incorreto ou o serviço está instável. Verifique as configurações.`);
+        }
+        if (resp.status === 404) {
+          throw new Error(`Modelo não encontrado (404). Verifique o ID '${aiConfig.modelId}' nas configurações.`);
+        }
+        throw new Error(errorData.error?.message || `Erro ${resp.status} na conexão com a IA.`);
+      }
+
       const result = await resp.json();
       
       let finalContent;
@@ -282,7 +319,7 @@ Canvas: ${JSON.stringify(canvasData)}`;
       }
     } catch (err) {
       console.error(err);
-      alert("Erro na análise. Verifique sua chave de API e conexão.");
+      alert(err.message || "Erro na análise. Verifique sua chave de API e conexão.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -346,14 +383,41 @@ Canvas: ${JSON.stringify(canvasData)}`;
                   )}
 
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase text-white/40 tracking-widest block">ID DO MODELO</label>
-                     <input 
-                        type="text" 
-                        placeholder={aiConfig.provider === 'gemini' ? "gemini-1.5-flash" : "meta-llama/llama-3-8b-instruct"}
-                        value={aiConfig.modelId}
-                        onChange={e => setAiConfig(prev => ({ ...prev, modelId: e.target.value }))}
-                        className="w-full bg-black/40 border border-white/10 p-3 text-xs font-bold text-white outline-none focus:border-cyan-500/50"
-                     />
+                     <div className="flex justify-between items-center">
+                        <label className="text-[10px] font-black uppercase text-white/40 tracking-widest block">ID DO MODELO</label>
+                        <button 
+                          onClick={() => setAiConfig(prev => ({ 
+                            ...prev, 
+                            modelId: aiConfig.provider === 'gemini' ? 'gemini-1.5-flash' : 'google/gemini-2.0-flash-001' 
+                          }))}
+                          className="text-[8px] font-black text-cyan-400 uppercase tracking-tighter hover:underline"
+                        >
+                          Usar Recomendado
+                        </button>
+                     </div>
+                     <div className="relative group/select">
+                        <input 
+                           type="text" 
+                           placeholder={aiConfig.provider === 'gemini' ? "gemini-1.5-flash" : "meta-llama/llama-3-8b-instruct"}
+                           value={aiConfig.modelId}
+                           onChange={e => setAiConfig(prev => ({ ...prev, modelId: e.target.value }))}
+                           className="w-full bg-black/40 border border-white/10 p-3 text-xs font-bold text-white outline-none focus:border-cyan-500/50"
+                        />
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                           {(aiConfig.provider === 'gemini' ? ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp'] : ['google/gemini-2.0-flash-001', 'anthropic/claude-3.5-sonnet', 'meta-llama/llama-3.3-70b-instruct']).map(m => (
+                              <button 
+                                 key={m}
+                                 onClick={() => setAiConfig(prev => ({ ...prev, modelId: m }))}
+                                 className={cn(
+                                    "px-2 py-1.5 text-[8px] font-black border transition-all text-left truncate uppercase",
+                                    aiConfig.modelId === m ? "bg-cyan-500 text-black border-cyan-500" : "bg-white/5 border-white/10 text-white/40 hover:border-white/30"
+                                 )}
+                              >
+                                 {m.split('/').pop()}
+                              </button>
+                           ))}
+                        </div>
+                     </div>
                   </div>
 
                   <div className="space-y-2">
@@ -370,12 +434,22 @@ Canvas: ${JSON.stringify(canvasData)}`;
                      />
                   </div>
 
-                  <div className="pt-4 flex flex-col gap-3">
+                   <div className="pt-4 flex flex-col gap-3">
                      <button 
                         onClick={() => setIsSettingsOpen(false)}
                         className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-black text-[10px] uppercase tracking-widest py-3 transition-colors"
                      >
                         SALVAR E APLICAR CONEXÃO
+                     </button>
+                     <button 
+                        onClick={() => {
+                          if (confirm("Resetar configurações para o padrão?")) {
+                            setAiConfig({ provider: 'gemini', apiKey: '', modelId: 'gemini-1.5-flash', baseUrl: '' });
+                          }
+                        }}
+                        className="w-full bg-white/5 hover:bg-white/10 text-white/40 font-black text-[10px] uppercase tracking-widest py-2 transition-colors border border-white/5"
+                     >
+                        RESTALRAR PADRÕES
                      </button>
                      <div className="text-[8px] text-white/20 text-center uppercase tracking-widest flex items-center justify-center gap-2">
                         <Globe size={10} /> Conexão Criptografada SSL Ativada
@@ -539,12 +613,79 @@ Canvas: ${JSON.stringify(canvasData)}`;
               ) : (
                 <div className="space-y-8 animate-in fade-in duration-700">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white/5 border border-white/10 p-6 flex flex-col items-center justify-center relative overflow-hidden group"><div className="text-5xl font-black text-white tracking-tighter mb-1 relative z-10">{analysis.score}</div><div className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none text-center">SCORE DE VIABILIDADE</div><div className="absolute bottom-0 left-0 h-1 bg-cyan-400 transition-all duration-1000 ease-out" style={{ width: `${analysis.score}%` }} /></div>
+                    <div className="bg-white/5 border border-white/10 p-6 flex flex-col items-center justify-center relative overflow-hidden group">
+                      <div className="text-5xl font-black text-white tracking-tighter mb-1 relative z-10">{analysis.score}</div>
+                      <div className="text-[8px] font-black text-cyan-400 uppercase tracking-widest leading-none text-center">SCORE GLOBAL</div>
+                      <div className="absolute bottom-0 left-0 h-1 bg-cyan-400 transition-all duration-1000 ease-out" style={{ width: `${analysis.score}%` }} />
+                    </div>
                     <div className="bg-white/5 border border-white/10 p-6 flex flex-col justify-center gap-3">
                        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">NÍVEL DE RISCO</div>
-                       <div className={cn("text-[10px] font-black uppercase px-2 py-1 rounded-sm text-center", analysis.riskLevel === 'ALTO' ? 'bg-red-500 text-white' : analysis.riskLevel === 'MÉDIO' ? 'bg-amber-500 text-black' : 'bg-emerald-500 text-black')}>{analysis.riskLevel}</div>
+                       <div className={cn("text-[10px] font-black uppercase px-2 py-1 rounded-sm text-center", 
+                         analysis.riskLevel === 'ALTO' ? 'bg-red-500 text-white' : 
+                         analysis.riskLevel === 'MÉDIO' ? 'bg-amber-500 text-black' : 
+                         'bg-emerald-500 text-black'
+                       )}>{analysis.riskLevel}</div>
                     </div>
                   </div>
+
+                  {/* Novos Scores de Validação */}
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="bg-white/5 border border-white/10 p-4 space-y-2">
+                        <div className="flex justify-between items-center text-[8px] font-black text-white/40 uppercase tracking-widest">
+                           <span>PROBLEMA-SOLUÇÃO</span>
+                           <span className="text-white">{analysis.psfScore || 0}%</span>
+                        </div>
+                        <div className="h-1 bg-white/5 w-full overflow-hidden">
+                           <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: `${analysis.psfScore || 0}%` }} />
+                        </div>
+                        <p className="text-[7px] text-white/20 uppercase tracking-tighter">A dor é real e a solução resolve? (PSF)</p>
+                     </div>
+                     <div className="bg-white/5 border border-white/10 p-4 space-y-2">
+                        <div className="flex justify-between items-center text-[8px] font-black text-white/40 uppercase tracking-widest">
+                           <span>PRODUTO-MERCADO</span>
+                           <span className="text-white">{analysis.pmfScore || 0}%</span>
+                        </div>
+                        <div className="h-1 bg-white/5 w-full overflow-hidden">
+                           <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${analysis.pmfScore || 0}%` }} />
+                        </div>
+                        <p className="text-[7px] text-white/20 uppercase tracking-tighter">O mercado quer pagar e ficar? (PMF)</p>
+                     </div>
+                  </div>
+
+                  {/* Testes de Heurística */}
+                  {analysis.heuristicsTests && (
+                    <div className="space-y-3 bg-black/20 border border-white/5 p-4">
+                       <h4 className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-3 text-center">ANÁLISE DE SAÚDE DO MODELO</h4>
+                       <div className="grid grid-cols-1 gap-2">
+                          {Object.entries(analysis.heuristicsTests).map(([key, test]) => (
+                             <div key={key} className="flex items-start gap-3 p-2 border-l-2 border-white/5 bg-white/[0.02] group/test">
+                                <div className={cn(
+                                   "mt-1 w-1.5 h-1.5 rounded-full shrink-0",
+                                   test.status === 'PASSOU' ? 'bg-emerald-500' : test.status === 'FALHOU' ? 'bg-red-500' : 'bg-amber-500'
+                                )} />
+                                <div className="space-y-1">
+                                   <div className="text-[9px] font-black text-white/80 uppercase tracking-widest">
+                                      {key === 'especificidade' ? 'Foco Estratégico' : 
+                                       key === 'consistenciaCanais' ? 'Conexão com Cliente' : 
+                                       key === 'viabilidadeFinanceira' ? 'Potencial de Lucro' : 
+                                       'Sustentabilidade (Vantagem)'}
+                                   </div>
+                                   <p className="text-[8px] text-white/40 font-medium leading-relaxed uppercase italic">{test.comentario}</p>
+                                </div>
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+                  )}
+
+                  {analysis.benchmarksCheck && (
+                    <div className="bg-cyan-500/5 border-l-2 border-cyan-500/50 p-4">
+                       <div className="text-[9px] font-black text-cyan-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                          <BarChart3 size={10} /> SAÚDE FINANCEIRA COMPARADA
+                       </div>
+                       <p className="text-[9px] font-medium text-slate-300 leading-relaxed uppercase">{analysis.benchmarksCheck}</p>
+                    </div>
+                   )}
                   <div className="space-y-3"><div className="flex items-center gap-2"><h4 className="text-[10px] font-black uppercase text-white/40 tracking-widest italic">SUMÁRIO ESTRATÉGICO</h4></div><div className="bg-gradient-to-br from-white/5 to-transparent border border-white/5 p-6 relative"><p className="text-[11px] font-medium text-slate-300 leading-relaxed text-justify">{analysis.summary}</p></div></div>
                   <div className="pt-4 border-t border-white/5"><p className="text-xl font-black italic text-white leading-tight tracking-tighter text-center uppercase">"{analysis.verdict}"</p></div>
 
