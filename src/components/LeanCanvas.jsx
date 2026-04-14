@@ -597,8 +597,40 @@ Canvas: ${JSON.stringify(canvasData)}`;
                 <h2 className="text-[10px] font-black tracking-[0.5em] text-cyan-400 uppercase leading-none">INTELIGÊNCIA CENTRAL</h2>
               </div>
               <div className="flex items-center gap-3 text-white">
-                 <button onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }} className="p-1.5 hover:bg-white/5 text-white/30 hover:text-cyan-400 transition-all border border-transparent hover:border-white/10"><Settings size={14} /></button>
-                 <button onClick={(e) => { e.stopPropagation(); performAnalysis(); }} disabled={isAnalyzing || !canAnalyze} className={cn("sharp-button bg-cyan-400 hover:bg-cyan-300", !canAnalyze && "opacity-20 pointer-events-none")}>{isAnalyzing ? "..." : "ANALISAR"}</button>
+                <div className="relative group/help">
+                  <button className="p-1.5 hover:bg-white/5 text-white/30 hover:text-cyan-400 transition-all border border-transparent hover:border-white/10 outline-none">
+                    <HelpCircle size={14} />
+                  </button>
+                  {/* Tooltip Tutorial */}
+                  <div className="absolute top-full right-0 mt-3 w-72 p-4 bg-[#0f172a] border border-cyan-500/30 shadow-[0_0_50px_rgba(34,211,238,0.15)] opacity-0 invisible group-hover/help:opacity-100 group-hover/help:visible transition-all duration-300 z-[600]">
+                    <div className="flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
+                      <Sparkles size={12} className="text-cyan-400" />
+                      <h3 className="text-[10px] font-black uppercase tracking-widest text-white">Guia de Conexão Neural</h3>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <h4 className="text-[9px] font-black text-cyan-400 uppercase">1. Google Gemini</h4>
+                        <p className="text-[8px] text-white/60 leading-relaxed uppercase">Obtenha sua chave gratuita no <b>Google AI Studio</b> para acesso direto.</p>
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-[9px] font-black text-purple-400 uppercase">2. OpenRouter</h4>
+                        <p className="text-[8px] text-white/60 leading-relaxed uppercase">Conecte via <b>OpenRouter</b> para usar Claude, GPT-4 ou Llama.</p>
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-[9px] font-black text-amber-400 uppercase">3. Custom Endpoint</h4>
+                        <p className="text-[8px] text-white/60 leading-relaxed uppercase">Use <b>DeepSeek</b> ou outros provedores inserindo a Base URL e sua chave.</p>
+                      </div>
+                      <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+                        <Shield size={10} className="text-emerald-400" />
+                        <p className="text-[7px] text-emerald-400/80 font-bold uppercase tracking-tighter">Privacidade Total: Dados salvos localmente.</p>
+                      </div>
+                    </div>
+                    {/* Arrow */}
+                    <div className="absolute bottom-full right-2 w-3 h-3 bg-[#0f172a] border-l border-t border-cyan-500/30 rotate-45 -mb-1.5" />
+                  </div>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }} className="p-1.5 hover:bg-white/5 text-white/30 hover:text-cyan-400 transition-all border border-transparent hover:border-white/10"><Settings size={14} /></button>
+                <button onClick={(e) => { e.stopPropagation(); performAnalysis(); }} disabled={isAnalyzing || !canAnalyze} className={cn("sharp-button bg-cyan-400 hover:bg-cyan-300", !canAnalyze && "opacity-20 pointer-events-none")}>{isAnalyzing ? "..." : "ANALISAR"}</button>
               </div>
             </div>
 
