@@ -10,6 +10,7 @@ import {
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import LeanCanvasReport from './LeanCanvasReport';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -66,17 +67,9 @@ const emptyCanvasState = {
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-export default function LeanCanvas() {
-  const [canvasData, setCanvasData] = useState(() => {
-    const saved = localStorage.getItem('lean_canvas_data');
-    if (!saved) return emptyCanvasState;
-    try {
-      const parsed = JSON.parse(saved);
-      return { ...emptyCanvasState, ...parsed };
-    } catch (e) {
-      return emptyCanvasState;
-    }
-  });
+export default function LeanCanvas({ teamId }) {
+  const [canvasData, setCanvasData] = useState(emptyCanvasState);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const [tourStep, setTourStep] = useState(() => {
     const completed = localStorage.getItem('lean_canvas_tour_completed');
@@ -103,21 +96,112 @@ export default function LeanCanvas() {
     };
   });
 
+  // Load initial data from Supabase or localStorage
+  useEffect(() => {
+    async function loadInitialData() {
+      if (isSupabaseConfigured && teamId) {
+        try {
+          const { data, error } = await supabase
+            .from('lean_canvas')
+            .select('canvas_data, analysis')
+            .eq('team_id', teamId)
+            .maybeSingle(); // Use maybeSingle to prevent exception if no row exists yet
+
+          if (data && !error) {
+            if (data.canvas_data) {
+              setCanvasData({ ...emptyCanvasState, ...data.canvas_data });
+            }
+            if (data.analysis) {
+              setAnalysis(data.analysis);
+            }
+            setIsLoaded(true);
+            return;
+          }
+        } catch (err) {
+          console.error("Erro ao carregar dados do Supabase:", err);
+        }
+      }
+
+      // Local storage fallback
+      const savedData = localStorage.getItem('lean_canvas_data');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setCanvasData({ ...emptyCanvasState, ...parsed });
+        } catch (e) {
+          setCanvasData(emptyCanvasState);
+        }
+      }
+
+      const savedAnalysis = localStorage.getItem('lean_canvas_analysis');
+      if (savedAnalysis) {
+        try {
+          setAnalysis(JSON.parse(savedAnalysis));
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      setIsLoaded(true);
+    }
+
+    loadInitialData();
+  }, [teamId]);
+
   useEffect(() => {
     localStorage.setItem('lean_canvas_ai_config', JSON.stringify(aiConfig));
   }, [aiConfig]);
 
+  // Save changes to localStorage (always) and Supabase (if loaded and online/configured)
   useEffect(() => {
+    if (!isLoaded) return;
+
     localStorage.setItem('lean_canvas_data', JSON.stringify(canvasData));
     setLastSaved(new Date().toLocaleTimeString());
     setIsEditing(false);
-  }, [canvasData]);
+
+    // Save to Supabase
+    if (isSupabaseConfigured && teamId) {
+      const saveToDb = async () => {
+        try {
+          await supabase.from('lean_canvas').upsert({
+            team_id: teamId,
+            canvas_data: canvasData,
+            analysis: analysis,
+            updated_at: new Date().toISOString()
+          });
+        } catch (err) {
+          console.error("Erro ao salvar no Supabase:", err);
+        }
+      };
+      saveToDb();
+    }
+  }, [canvasData, isLoaded, teamId]);
 
   useEffect(() => {
+    if (!isLoaded) return;
+
     if (analysis) {
       localStorage.setItem('lean_canvas_analysis', JSON.stringify(analysis));
+
+      // Save to Supabase
+      if (isSupabaseConfigured && teamId) {
+        const saveToDb = async () => {
+          try {
+            await supabase.from('lean_canvas').upsert({
+              team_id: teamId,
+              canvas_data: canvasData,
+              analysis: analysis,
+              updated_at: new Date().toISOString()
+            });
+          } catch (err) {
+            console.error("Erro ao salvar no Supabase:", err);
+          }
+        };
+        saveToDb();
+      }
     }
-  }, [analysis]);
+  }, [analysis, isLoaded, teamId]);
 
   const saveCanvasToFile = () => {
     const exportData = {
